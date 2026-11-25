@@ -1,0 +1,8 @@
+/* Self-hosted fonts (no runtime calls to external font services). */
+@import "@fontsource/baloo-bhaijaan-2/500.css";
+@import "@fontsource/baloo-bhaijaan-2/700.css";
+@import "@fontsource/baloo-bhaijaan-2/800.css";
+@import "@fontsource/readex-pro/400.css";
+@import "@fontsource/readex-pro/500.css";
+@import "@fontsource/readex-pro/700.css";
+@import "@fontsource/amiri-quran/400.css";

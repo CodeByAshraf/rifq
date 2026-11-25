@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+/* Scan shared components (also used by the standalone preview build). */
+@source "../";
+
+@theme {
+  --font-display: "Baloo Bhaijaan 2", "Readex Pro", system-ui, sans-serif;
+  --font-body: "Readex Pro", "Baloo Bhaijaan 2", system-ui, sans-serif;
+  --font-quran: "Amiri Quran", "KFGQPC Uthmanic Script HAFS", "Scheherazade New", serif;
+
+  --color-ink-900: #1d3a4a;
+  --color-ink-700: #35566a;
+  --color-ink-500: #5f7d8e;
+  --color-ink-300: #a6bcc7;
+
+  --color-teal-50: #effcfa;
+  --color-teal-100: #d3f5f0;
+  --color-teal-300: #7fe0d4;
+  --color-teal-400: #3fcbbd;
+  --color-teal-500: #1fb3a6;
+  --color-teal-600: #12968b;
+  --color-teal-700: #0d7870;
+
+  --color-mint-100: #e2f9ec;
+  --color-mint-300: #a8ecc6;
+  --color-mint-400: #6fdca4;
+  --color-mint-500: #45c785;
+  --color-mint-600: #2fa868;
+
+  --color-cream-50: #fffcf6;
+  --color-cream-100: #fff7ea;
+  --color-cream-200: #fbecd5;
+  --color-cream-300: #f2dcb9;
+
+  --color-sky-100: #e5f4ff;
+  --color-sky-200: #c6e8ff;
+  --color-sky-300: #92d2fb;
+  --color-sky-400: #5fb9f2;
+  --color-sky-500: #3a9de0;
+
+  --color-lilac-100: #efeaff;
+  --color-lilac-200: #ddd3ff;
+  --color-lilac-400: #a790f3;
+  --color-lilac-500: #8a6fe6;
+  --color-lilac-600: #6f54cc;
+
+  --color-sun-100: #fff4d1;
+  --color-sun-300: #ffdf80;
+  --color-sun-400: #ffcc4d;
+  --color-sun-500: #f5b52e;
+  --color-sun-600: #d9961a;
+
+  --color-coral-100: #ffe7e5;
+  --color-coral-400: #ff9a8b;
+  --color-coral-500: #f27766;
+
+  --radius-blob: 2rem;
+  --shadow-soft: 0 10px 30px -12px rgba(29, 58, 74, 0.25);
+  --shadow-lift: 0 18px 40px -16px rgba(29, 58, 74, 0.35);
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-slow: float 9s ease-in-out infinite;
+  --animate-twinkle: twinkle 3s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.35; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-cream-100);
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink-900);
+  background: var(--color-cream-100);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+}
+
+/* Quran text: always rendered from the verified source, never styled by splitting letters. */
+.quran {
+  font-family: var(--font-quran);
+  direction: rtl;
+  line-height: 2.3;
+  font-feature-settings: "calt", "liga";
+  word-spacing: 0.08em;
+}
+
+/* "Clay" 3D button: a raised face with a solid lower edge. */
+.clay {
+  --clay-face: var(--color-teal-500);
+  --clay-edge: var(--color-teal-700);
+  position: relative;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--clay-face) 80%, white) 0%, var(--clay-face) 55%);
+  box-shadow:
+    0 6px 0 var(--clay-edge),
+    0 14px 24px -10px color-mix(in srgb, var(--clay-edge) 70%, transparent),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.2s ease;
+}
+.clay:hover { filter: brightness(1.04) saturate(1.05); }
+.clay:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 2px 0 var(--clay-edge),
+    0 6px 12px -8px color-mix(in srgb, var(--clay-edge) 70%, transparent),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55);
+}
+.clay:disabled { filter: grayscale(0.6) opacity(0.6); cursor: not-allowed; }
+.clay-teal { --clay-face: var(--color-teal-500); --clay-edge: var(--color-teal-700); }
+.clay-mint { --clay-face: var(--color-mint-500); --clay-edge: var(--color-mint-600); }
+.clay-sun { --clay-face: var(--color-sun-400); --clay-edge: var(--color-sun-600); }
+.clay-lilac { --clay-face: var(--color-lilac-500); --clay-edge: var(--color-lilac-600); }
+.clay-sky { --clay-face: var(--color-sky-400); --clay-edge: var(--color-sky-500); }
+.clay-coral { --clay-face: var(--color-coral-400); --clay-edge: var(--color-coral-500); }
+.clay-white {
+  --clay-face: #ffffff;
+  --clay-edge: var(--color-cream-300);
+  background: #fff;
+}
+
+/* Soft raised card */
+.card-3d {
+  background: linear-gradient(180deg, #ffffff 0%, var(--color-cream-50) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 6px 0 var(--color-cream-200),
+    0 22px 40px -22px rgba(29, 58, 74, 0.35);
+  border-radius: 1.75rem;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+}
+
+.sky-bg {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(255, 223, 128, 0.45), transparent 60%),
+    radial-gradient(900px 500px at 0% 0%, rgba(167, 144, 243, 0.25), transparent 60%),
+    linear-gradient(180deg, #bfe6ff 0%, #dff3ff 38%, var(--color-cream-100) 78%);
+}
+
+.adult-bg {
+  background:
+    radial-gradient(900px 420px at 100% 0%, rgba(31, 179, 166, 0.10), transparent 60%),
+    radial-gradient(700px 400px at 0% 10%, rgba(245, 181, 46, 0.08), transparent 60%),
+    #fbf8f2;
+}
+
+.pattern-girih {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%231fb3a6' stroke-opacity='0.12' stroke-width='1.2'%3E%3Cpath d='M28 4l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Ccircle cx='28' cy='28' r='6'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+:focus-visible {
+  outline: 3px solid var(--color-sun-400);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Answer feedback states (keep text dark for contrast) */
+.clay-right { --clay-face: var(--color-mint-100); --clay-edge: var(--color-mint-500); background: var(--color-mint-100); color: var(--color-ink-900); outline: 3px solid var(--color-mint-400); }
+.clay-wrong { --clay-face: var(--color-coral-100); --clay-edge: var(--color-coral-400); background: var(--color-coral-100); color: var(--color-ink-900); outline: 3px solid var(--color-coral-400); }
+
+/* Playful press feedback (children's mode) */
+.boing { animation: boing 0.42s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes boing {
+  0% { transform: scale(0.92); }
+  45% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.clay:active { transform: translateY(4px) scale(0.97); }
+
+/* Certificate printing: only the certificate image is printed, on landscape A4. */
+#rifq-print { display: none; }
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  body > *:not(#rifq-print) { display: none !important; }
+  #rifq-print { display: block !important; }
+  #rifq-print img { width: 100vw; height: 100vh; object-fit: contain; }
+}

@@ -1,0 +1,108 @@
+# Builds the RIFQ mobile apps.
+#  - Android: always builds a debug APK (install it directly on a phone).
+#    If the signing secrets exist it also builds a signed release AAB for Google Play.
+#  - iOS: compiles the Xcode project on a macOS runner (no signing) to prove it builds.
+#    Store upload for iOS is done from Xcode on a Mac (see MOBILE.md).
+#
+# Repository secrets used (Settings > Secrets and variables > Actions):
+#   RIFQ_CONTACT_EMAIL (required by the stores), RIFQ_SUPABASE_URL, RIFQ_SUPABASE_ANON_KEY
+#   RIFQ_TURNSTILE_SITE_KEY, RIFQ_SHARE_URL (optional)
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD (optional, for release)
+# Never add the Supabase service-role key here: scripts/build-app.mjs refuses it.
+
+name: mobile
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "legal-site/**"]
+
+permissions:
+  contents: write # publishes the test APK as a GitHub Release (easy download on the phone)
+
+env:
+  RIFQ_SUPABASE_URL: ${{ secrets.RIFQ_SUPABASE_URL }}
+  RIFQ_SUPABASE_ANON_KEY: ${{ secrets.RIFQ_SUPABASE_ANON_KEY }}
+  RIFQ_SHARE_URL: ${{ secrets.RIFQ_SHARE_URL }}
+  RIFQ_TURNSTILE_SITE_KEY: ${{ secrets.RIFQ_TURNSTILE_SITE_KEY }}
+  RIFQ_CONTACT_EMAIL: ${{ secrets.RIFQ_CONTACT_EMAIL }}
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      RIFQ_VERSION_CODE: ${{ github.run_number }}
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Tests (Fajr times and alarm plan, validation, database)
+        run: npm run test:fajr && npm run test:validation && npm run test:db
+      - name: Build web bundle and sync native project
+        run: npm run app:sync
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Debug APK
+        working-directory: mobile/android
+        run: ./gradlew --no-daemon assembleDebug
+      - name: Name the APK
+        run: cp mobile/android/app/build/outputs/apk/debug/app-debug.apk "rifq-test-${{ github.run_number }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rifq-debug-apk
+          path: rifq-test-*.apk
+      # A release page with the APK as a direct link: open it on the phone and tap the file.
+      - name: Publish test release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: test-${{ github.run_number }}
+          name: "رِفق — نسخة تجريبية ${{ github.run_number }}"
+          body: "للتجربة فقط (debug). افتح الصفحة من الموبايل واضغط على ملف .apk لتنزيله وتثبيته."
+          prerelease: true
+          files: rifq-test-*.apk
+      - name: Signed release AAB
+        if: ${{ env.HAS_KEY == 'true' }}
+        env:
+          RIFQ_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RIFQ_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          RIFQ_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        working-directory: mobile/android
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/rifq.jks"
+          RIFQ_KEYSTORE_PATH="$RUNNER_TEMP/rifq.jks" ./gradlew --no-daemon bundleRelease
+          rm -f "$RUNNER_TEMP/rifq.jks"
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('mobile/android/app/build/outputs/bundle/release/*.aab') != '' }}
+        with:
+          name: rifq-release-aab
+          path: mobile/android/app/build/outputs/bundle/release/*.aab
+
+  ios:
+    # Run by hand only (Actions → mobile → Run workflow): macOS minutes cost 10× on GitHub.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run app:sync
+      - name: Compile (simulator, unsigned)
+        run: |
+          xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build

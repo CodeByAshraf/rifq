@@ -1,0 +1,45 @@
+# Publishes the two public pages the app stores require (privacy policy, account deletion)
+# to GitHub Pages. Enable it once: Settings → Pages → Source: "GitHub Actions".
+# The pages will be at https://<user>.github.io/<repo>/privacy.html and /delete-account.html
+name: store-pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/components/screens/Privacy.tsx"
+      - "src/components/screens/DeleteAccountInfo.tsx"
+      - "scripts/build-legal.mjs"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:legal
+        env:
+          RIFQ_CONTACT_EMAIL: ${{ secrets.RIFQ_CONTACT_EMAIL }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: legal-site
+      - id: deployment
+        uses: actions/deploy-pages@v4
