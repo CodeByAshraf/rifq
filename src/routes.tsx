@@ -4,6 +4,7 @@ import { useProgress } from "@/lib/store";
 import { Adhkar } from "@/components/screens/Adhkar";
 import { AdultHome } from "@/components/screens/AdultHome";
 import { MushafReader } from "@/components/screens/MushafReader";
+import { Bedtime } from "@/components/screens/Bedtime";
 import { AppSettings } from "@/components/screens/AppSettings";
 import { Certificates } from "@/components/screens/Certificates";
 import { Challenges } from "@/components/screens/Challenges";
@@ -43,6 +44,7 @@ export const ROUTES: Record<string, () => ReactElement> = {
   "/tajweed": Tajweed,
   "/play": Games,
   "/stories": Stories,
+  "/bedtime": Bedtime,
   "/revision": Revision,
   "/parents": Parents,
   "/adults": AdultHome,

@@ -8,7 +8,7 @@ import { join } from "node:path";
 const dir = mkdtempSync(join(tmpdir(), "rifq-test-"));
 const out = join(dir, "bundle.mjs");
 await build({
-  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts"; export { mergeIntoState } from "./src/lib/sync-merge.ts";', resolveDir: process.cwd(), loader: "ts" },
+  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts"; export { mergeIntoState } from "./src/lib/sync-merge.ts"; export { STORIES } from "./src/data/stories.ts"; export { storyPlan, narrationTexts, lineTexts } from "./src/lib/story-clips.ts";', resolveDir: process.cwd(), loader: "ts" },
   bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent",
 });
 const V = await import(out);
@@ -110,6 +110,17 @@ t("sanitizeState cleans a hostile state and keeps valid data", () => {
   assert.equal(s.onboarding, undefined);
   assert.deepEqual(s.focus, { surah: 2, ayah: 255 });
   assert.equal(Object.getPrototypeOf(d.verses), Object.prototype);
+});
+t("story narration: every clip the app plays is one the script records; verses are never narrated", () => {
+  const recorded = new Set([...V.lineTexts(), ...V.STORIES.flatMap((s) => V.narrationTexts(s))].map((c) => c.file));
+  for (const s of V.STORIES) {
+    const plan = V.storyPlan(s);
+    for (const c of plan) if (c.kind === "voice") assert.ok(recorded.has(c.file), c.file);
+    const ayahs = plan.filter((c) => c.kind === "ayah");
+    assert.equal(ayahs.length, s.ayah ? s.ayah.to - s.ayah.from + 1 : 0, s.id);
+    assert.equal(V.storyPlan(s, 2)[0].page, 2, "listening can start from the open page");
+  }
+  for (const c of V.STORIES.flatMap((s) => V.narrationTexts(s))) assert.ok(!/[\u06D6-\u06ED\u08F0-\u08F2\u0671]/.test(c.text), c.file);
 });
 t("pull merges the account into the device without losing local data", () => {
   const v = (lastReviewed, state) => ({ state, interval: 1, ease: 2.5, reps: 1, lapses: 0, due: "2026-12-01", lastReviewed, firstLearned: "2026-11-01T00:00:00Z" });

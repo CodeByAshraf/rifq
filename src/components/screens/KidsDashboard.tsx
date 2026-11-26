@@ -110,6 +110,7 @@ export function KidsDashboard() {
       {/* ---------- Quick access to new sections ---------- */}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
+          { href: "/bedtime", label: "قبل النوم", sub: "حكايات مسموعة", c: "from-[#0b1736] to-[#1d2f5c] text-white" },
           { href: "/certificates", label: "شهاداتي", sub: `${toArabicDigits(Object.keys(data.certificates ?? {}).length)} شهادة`, c: "from-sun-300 to-sun-500 text-ink-900" },
           { href: "/adhkar", label: "الأذكار", sub: "الصباح والمساء", c: "from-teal-400 to-teal-600 text-white" },
           { href: "/recite", label: "تلاوتي", sub: "سجّل صوتك", c: "from-coral-400 to-coral-500 text-white" },

@@ -1,7 +1,7 @@
 import { Link } from "@/components/shell/Link";
 import { motion } from "framer-motion";
 import { MagdyImage } from "@/components/art/Magdy";
-import { IconAlarm, IconBook, IconShield, IconFlame, IconLantern, IconMap, IconPuzzle, IconRefresh, IconSparkle, IconStar, IconStories, IconVolume } from "@/components/art/Icons";
+import { IconAlarm, IconBook, IconShield, IconFlame, IconHeadphones, IconLantern, IconMap, IconPuzzle, IconRefresh, IconSparkle, IconStar, IconStories, IconVolume } from "@/components/art/Icons";
 import { AppShell } from "@/components/shell/AppShell";
 import { Card } from "@/components/ui";
 import { toArabicDigits } from "@/lib/quran";
@@ -18,6 +18,7 @@ const ITEMS = [
   { href: "/revision", title: "المراجعة", text: "ثبّت ما حفظته", icon: IconRefresh, tone: "from-sky-300 to-sky-500 text-white" },
   { href: "/play", title: "العب وتعلّم", text: "ستّ ألعاب تعليمية", icon: IconPuzzle, tone: "from-sun-400 to-sun-500 text-ink-900" },
   { href: "/stories", title: "حكايات رِفق", text: "قصصٌ قصيرة تزرع القيم", icon: IconStories, tone: "from-coral-300 to-coral-500 text-white" },
+  { href: "/bedtime", title: "حكايات قبل النوم", text: "قصصٌ مسموعة بصوتٍ هادئ ومؤقّت نوم", icon: IconHeadphones, tone: "from-[#0b1736] to-[#1d2f5c] text-white" },
   { href: "/fajr-wake", title: "تحدّي الاستيقاظ", text: "جرّب ألعاب منبّه الفجر", icon: IconAlarm, tone: "from-[#27407a] to-teal-600 text-white" },
   { href: "/adults", title: "ركن الكبار", text: "المصحف كاملًا، والأذكار، ومنبّه الفجر", icon: IconBook, tone: "from-teal-700 to-[#0a4f49] text-white" },
   { href: "/parents", title: "ركن الوالدين", text: "الحساب والمتابعة والمنبّه والإعدادات", icon: IconShield, tone: "from-ink-500 to-ink-700 text-white" },

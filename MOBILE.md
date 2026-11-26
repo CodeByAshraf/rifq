@@ -140,3 +140,14 @@ testing first.
 - More → "Reminder and your data" can delete everything RIFQ keeps on the phone. Account deletion is under More → Account.
 - The Android back button closes dialogs, goes back, and finally exits from the home screen. It is ignored while the Fajr alarm is ringing.
 - In a desktop browser (`npm run dev`), the native-only parts show a short note instead: notifications, the alarm, and the share sheet.
+
+## Story narration («حكايات قبل النوم»)
+
+- The retelling of each story is read by an AI voice (ElevenLabs). Quran verses inside a story are
+  never synthesized: they play from EveryAyah (Mahmoud Khalil Al-Husary).
+- Recording: Actions → **story-audio** → Run workflow. It needs the secret `ELEVENLABS_API_KEY` and the
+  variable `NARRATOR_VOICE_ID`. Leave "only" empty for all stories, or give ids (e.g. `nuh-ark`) to try
+  a voice first. Only changed texts are recorded again.
+- The MP3 files are assets of the release `story-audio`; the app streams them when a story is played
+  (`src/lib/story-audio.ts`). Use a paid ElevenLabs plan: the free plan has no commercial licence.
+- `node scripts/narrate-stories.mjs --dry` lists every clip and the character count (~12k).

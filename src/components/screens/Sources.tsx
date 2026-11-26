@@ -82,6 +82,13 @@ export function Sources() {
           </p>
         </Section>
 
+        <Section title="الحكايات المسموعة">
+          <p>
+            يحكي القصصَ راوٍ بصوتٍ مولَّد بالذكاء الاصطناعي من <Ext href="https://elevenlabs.io">ElevenLabs</Ext>، ويقرأ نصّ الحكاية
+            فقط. أمّا الآيات داخل الحكايات فبتلاوة الشيخ محمود خليل الحصري من EveryAyah.com، ولا يُقرأ القرآن بصوتٍ مولَّد أبدًا.
+          </p>
+        </Section>
+
         <Section title="معاني الآيات">
           <p>
             {TAFSIR_SOURCE}. ومعاني الكلمات من «{MEANINGS_SOURCE}». نُقلت عبر{" "}

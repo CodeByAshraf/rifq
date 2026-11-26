@@ -86,7 +86,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "media-src 'self' blob: https://everyayah.com",
+  "media-src 'self' blob: https://everyayah.com https://github.com https://objects.githubusercontent.com https://release-assets.githubusercontent.com",
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com${dev ? " ws://localhost:*" : ""}`,
   "frame-src https://challenges.cloudflare.com",
   "object-src 'none'",

@@ -92,6 +92,8 @@ patch("mobile/ios/App/App/Info.plist", (s) => {
   s = s.replace(/\n\t<key>NSCameraUsageDescription<\/key>\n\t<string>[^<]*<\/string>/, "");
   // Location is no longer used (the Fajr city is chosen from a list).
   s = s.replace(/\n\t<key>NSLocationWhenInUseUsageDescription<\/key>\n\t<string>[^<]*<\/string>/, "");
+  // «حكايات قبل النوم» keeps telling the story when the screen locks.
+  s = plistAdd(s, "UIBackgroundModes", "<array>\n\t\t<string>audio</string>\n\t</array>");
   // HTTPS only, no custom encryption: answers the export-compliance question automatically.
   s = plistAdd(s, "ITSAppUsesNonExemptEncryption", "<false/>");
   return s;

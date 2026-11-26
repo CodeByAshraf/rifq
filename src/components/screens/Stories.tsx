@@ -1,4 +1,5 @@
 import { playSfx } from "@/lib/fx";
+import { Link } from "@/components/shell/Link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Character } from "@/components/art/Character";
@@ -11,6 +12,8 @@ import { Button, Card, Celebrate, Chip, SampleNotice } from "@/components/ui";
 import { CATEGORIES, STORIES, storyOfTheDay, type Story, type StoryCategory } from "@/data/stories";
 import { RULE_STYLES } from "@/data/tajweed";
 import { useRecitation } from "@/lib/player";
+import { useNarrator } from "@/lib/story-audio";
+import { storyPlan } from "@/lib/story-clips";
 import { surahMeta, toArabicDigits, useSurah } from "@/lib/quran";
 import { actions, useChild } from "@/lib/store";
 
@@ -50,6 +53,9 @@ function StoryList({ onOpen }: { onOpen: (s: Story) => void }) {
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <h2 className="font-display text-3xl font-extrabold">حكايات رِفق</h2>
+        <Link href="/bedtime" className="rounded-2xl bg-[#13224a] px-4 py-2 text-sm font-bold text-white">
+          🌙 حكايات قبل النوم
+        </Link>
         <Chip className="bg-sun-100 text-sun-600">
           قرأتَ {toArabicDigits(Object.keys(done).length)} من {toArabicDigits(STORIES.length)}
         </Chip>
@@ -121,6 +127,9 @@ function StoryReader({ story, onExit, onOpen }: { story: Story; onExit: () => vo
   const score = answers.filter((a, i) => a === story.quiz[i].answer).length;
   const allAnswered = answers.every((a) => a != null);
   const next = STORIES[(STORIES.findIndex((s) => s.id === story.id) + 1) % STORIES.length];
+  // Listening turns the pages with the voice.
+  const narrator = useNarrator({ onClip: (c) => c.kind === "voice" && c.page != null && setPage(c.page) });
+  const listening = narrator.state === "playing" || narrator.state === "loading";
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -146,7 +155,19 @@ function StoryReader({ story, onExit, onOpen }: { story: Story; onExit: () => vo
         </div>
 
         <div className="p-6 sm:p-8">
-          <h1 className="font-display text-3xl font-extrabold">{story.title}</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="font-display text-3xl font-extrabold">{story.title}</h1>
+            <Button
+              size="sm"
+              tone={listening ? "white" : "sun"}
+              onClick={() =>
+                listening ? narrator.pause() : narrator.state === "paused" ? narrator.resume() : narrator.start(storyPlan(story, Math.min(page, total - 1)))
+              }
+            >
+              {listening ? "⏸ إيقاف مؤقّت" : narrator.state === "paused" ? "▶ أكمل الاستماع" : "🎧 استمع للقصة"}
+            </Button>
+          </div>
+          {narrator.state === "error" && <p className="mt-2 text-sm font-bold text-coral-500">صوت هذه القصة غير متاح الآن. تأكّد من الاتصال بالإنترنت.</p>}
 
           <AnimatePresence mode="wait">
             <motion.div key={page} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.25 }} className="mt-5 min-h-40">
