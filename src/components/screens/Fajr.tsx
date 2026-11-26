@@ -7,7 +7,7 @@ import { Button, Card, SectionTitle } from "@/components/ui";
 import { alarmPermissionState, applyPlan, cancelTest, openExactAlarmSettings, requestAlarmPermissions, scheduleTest, type PermissionResult } from "@/lib/fajr/alarm";
 import { locate, nearestCity } from "@/lib/fajr/locate";
 import { CITIES, cityById, METHODS, type MethodId } from "@/lib/fajr/places";
-import { CHALLENGES, updateSettings, useFajrSettings, type ChallengeId, type FajrSettings } from "@/lib/fajr/settings";
+import { challengesFor, updateSettings, useFajrSettings, type ChallengeId, type FajrSettings, type Level } from "@/lib/fajr/settings";
 import { alarmTime, fajrTime, nextAlarm } from "@/lib/fajr/times";
 import { isNative } from "@/lib/native";
 import { toArabicDigits } from "@/lib/quran";
@@ -114,7 +114,7 @@ export function Fajr() {
         <div className="relative">
           <IconAlarm size={44} className="text-sun-300" />
           <h1 className="mt-2 font-display text-4xl font-extrabold">منبّه صلاة الفجر</h1>
-          <p className="mt-2 max-w-lg text-white/85">يوقظ طفلك في وقت الفجر، ولا يسكت حتى يحلّ تحدّيًا لطيفًا يثبت أنّه استيقظ فعلًا.</p>
+          <p className="mt-2 max-w-lg text-white/85">يرنّ في وقت الفجر، ولا يسكت حتى يُحَلّ تحدٍّ يثبت الاستيقاظ فعلًا: ألعابٌ لطيفة للطفل، ومسائل وذاكرة للكبير.</p>
           {s.enabled && next && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 font-display font-bold">
               <IconCheck size={18} /> المنبّه القادم: {dayName(next)} — {time(next)}
@@ -199,15 +199,45 @@ export function Fajr() {
         </Card>
 
         <Card className="p-6">
-          <SectionTitle title="تحدّيات الاستيقاظ" hint="يُختار واحدٌ كلّ صباح، ولا يسكت المنبّه حتى يحلّه طفلك" />
+          <SectionTitle title="مَن سيستيقظ؟" hint="يُختار تحدٍّ واحد كلّ صباح، ولا يسكت المنبّه حتى يُحَلّ" />
+          <div className="mb-4 grid grid-cols-2 gap-2">
+            {(["kid", "adult"] as Level[]).map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => change({ level: l, challenges: challengesFor(l) })}
+                className={`h-12 rounded-2xl font-display font-bold ${s.level === l ? "bg-teal-500 text-white" : "bg-cream-100 text-ink-700"}`}
+              >
+                {l === "kid" ? "طفل" : "كبير"}
+              </button>
+            ))}
+          </div>
           <div className="space-y-2">
-            {CHALLENGES.map((c) => (
+            {challengesFor(s.level).map((c) => (
               <label key={c} className="flex items-center justify-between rounded-2xl bg-cream-100 p-3 font-bold">
                 {CHALLENGE_TITLES[c]}
                 <input type="checkbox" checked={s.challenges.includes(c)} onChange={() => toggleChallenge(c)} className="h-6 w-6 accent-teal-500" />
               </label>
             ))}
           </div>
+
+          {s.level === "adult" && (
+            <>
+              <div className="mt-4 text-sm font-bold text-ink-700">الصعوبة</div>
+              <div className="mt-1 grid grid-cols-3 gap-2">
+                {([1, 2, 3] as const).map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => change({ difficulty: d })}
+                    className={`h-11 rounded-2xl font-bold ${s.difficulty === d ? "bg-teal-500 text-white" : "bg-cream-100 text-ink-700"}`}
+                  >
+                    {d === 1 ? "سهل" : d === 2 ? "متوسّط" : "صعب"}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           <Link href="/fajr-wake" className="mt-5 block text-center text-sm font-bold text-teal-700 underline-offset-4 hover:underline">
             جرّب التحدّي الآن

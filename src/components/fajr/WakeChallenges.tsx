@@ -1,11 +1,13 @@
 /**
  * The wake-up challenges shown when the Fajr alarm rings. Each one calls `onDone` only after it
- * is really solved: order the waking dua, count, repeat a colour sequence.
+ * is really solved. Children: order the waking dua, count, repeat a colour sequence.
+ * Adults: arithmetic, memory grid.
  */
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IconCheck } from "@/components/art/Icons";
-import { colorSequence, countRounds, duaPuzzle, PADS, wakingDua } from "@/lib/fajr/challenges";
+import { Button } from "@/components/ui";
+import { colorSequence, countRounds, duaPuzzle, GRID, mathProblem, memoryCells, PADS, parseNumber, wakingDua } from "@/lib/fajr/challenges";
 import type { ChallengeId } from "@/lib/fajr/settings";
 import { toArabicDigits } from "@/lib/quran";
 
@@ -171,13 +173,129 @@ function ColorSequence({ onDone }: { onDone: Done }) {
   );
 }
 
+// ---------------------------------------------------------------- adults
+
+function MathChallenge({ onDone, difficulty }: { onDone: Done; difficulty: 1 | 2 | 3 }) {
+  const total = 3;
+  const [solved, setSolved] = useState(0);
+  const [p, setP] = useState(() => mathProblem(rand, difficulty));
+  const [value, setValue] = useState("");
+  const [miss, setMiss] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const n = parseNumber(value);
+    if (n === null) return;
+    setValue("");
+    if (n !== p.answer) {
+      setMiss((m) => m + 1);
+      setP(mathProblem(rand, difficulty)); // a new problem: no guessing the same one
+      return;
+    }
+    if (solved + 1 === total) {
+      setSolved(total);
+      onDone();
+      return;
+    }
+    setSolved(solved + 1);
+    setP(mathProblem(rand, difficulty));
+    input.current?.focus();
+  };
+  return (
+    <form onSubmit={submit}>
+      <Progress done={solved} total={total} />
+      <p className="mt-4 text-center text-white/80">حُلّ {toArabicDigits(total)} مسائل صحيحة</p>
+      <Shake k={miss}>
+        <div className="mt-3 text-center font-display text-5xl font-extrabold tracking-wide" dir="ltr">
+          {toArabicDigits(p.text)} = ؟
+        </div>
+      </Shake>
+      <input
+        ref={input}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        inputMode="numeric"
+        autoComplete="off"
+        aria-label="الإجابة"
+        maxLength={6}
+        className="mt-5 h-16 w-full rounded-2xl bg-white text-center font-display text-3xl text-ink-900"
+        dir="ltr"
+      />
+      <Button type="submit" tone="sun" size="lg" className="mt-3 w-full">
+        تحقّق
+      </Button>
+    </form>
+  );
+}
+
+function MemoryGrid({ onDone, difficulty }: { onDone: Done; difficulty: 1 | 2 | 3 }) {
+  const count = 3 + difficulty;
+  const rounds = 2;
+  const [round, setRound] = useState(0);
+  const [cells, setCells] = useState(() => memoryCells(rand, count));
+  const [showing, setShowing] = useState(true);
+  const [picked, setPicked] = useState<number[]>([]);
+  const [miss, setMiss] = useState(0);
+
+  useEffect(() => {
+    setShowing(true);
+    setPicked([]);
+    const t = setTimeout(() => setShowing(false), 2500);
+    return () => clearTimeout(t);
+  }, [cells]);
+
+  const tap = (i: number) => {
+    if (showing || picked.includes(i)) return;
+    if (!cells.includes(i)) {
+      setMiss((m) => m + 1);
+      setCells(memoryCells(rand, count)); // wrong cell: new pattern
+      return;
+    }
+    const next = [...picked, i];
+    setPicked(next);
+    if (next.length < cells.length) return;
+    if (round + 1 === rounds) {
+      setRound(rounds);
+      setTimeout(onDone, 400);
+    } else {
+      setRound(round + 1);
+      setTimeout(() => setCells(memoryCells(rand, count)), 400);
+    }
+  };
+
+  return (
+    <div>
+      <Progress done={round} total={rounds} />
+      <p className="mt-4 text-center font-display text-xl font-bold">{showing ? `احفظ مكان ${toArabicDigits(count)} مربّعات…` : "اضغط المربّعات التي أضاءت"}</p>
+      <Shake k={miss}>
+        <div className="mx-auto mt-5 grid max-w-xs grid-cols-4 gap-2">
+          {Array.from({ length: GRID }, (_, i) => {
+            const on = (showing && cells.includes(i)) || picked.includes(i);
+            return (
+              <button
+                key={i}
+                type="button"
+                aria-label={`مربع ${i + 1}`}
+                onClick={() => tap(i)}
+                className={`aspect-square rounded-xl transition ${on ? "bg-sun-400" : "bg-white/15"}`}
+              />
+            );
+          })}
+        </div>
+      </Shake>
+    </div>
+  );
+}
+
 export const CHALLENGE_TITLES: Record<ChallengeId, string> = {
   dua: "رتّب دعاء الاستيقاظ",
   count: "عُدّ وأجب",
   colors: "تذكّر الألوان",
+  math: "مسائل حساب",
+  memory: "لعبة الذاكرة",
 };
 
-export function WakeChallenge({ id, onDone }: { id: ChallengeId; onDone: Done }) {
+export function WakeChallenge({ id, difficulty, onDone }: { id: ChallengeId; difficulty: 1 | 2 | 3; onDone: Done }) {
   const current = id;
   return (
     <div>
@@ -187,6 +305,8 @@ export function WakeChallenge({ id, onDone }: { id: ChallengeId; onDone: Done })
       {current === "dua" && <DuaOrder onDone={onDone} />}
       {current === "count" && <CountItems onDone={onDone} />}
       {current === "colors" && <ColorSequence onDone={onDone} />}
+      {current === "math" && <MathChallenge onDone={onDone} difficulty={difficulty} />}
+      {current === "memory" && <MemoryGrid onDone={onDone} difficulty={difficulty} />}
     </div>
   );
 }

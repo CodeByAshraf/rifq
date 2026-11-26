@@ -11,6 +11,8 @@ import { SoundToggle } from "@/components/shell/Fx";
 import { CertificateAnnouncer } from "@/components/certificates/CertificateAnnouncer";
 import { ReminderBanner } from "@/components/shell/ReminderBanner";
 import { streak, useChild } from "@/lib/store";
+import { isAdultArea } from "@/lib/area";
+import { IconAlarm, IconSparkle } from "@/components/art/Icons";
 
 // Mobile bottom bar shows items without `desktopOnly`; "المزيد" opens every other section.
 const NAV = [
@@ -24,7 +26,60 @@ const NAV = [
   { href: "/more", label: "المزيد", icon: IconMap },
 ];
 
+// The adults' corner: calm layout, its own navigation.
+const ADULT_NAV = [
+  { href: "/adults", label: "الرئيسية", icon: IconHome },
+  { href: "/mushaf", label: "المصحف", icon: IconBook },
+  { href: "/adults-adhkar", label: "الأذكار", icon: IconSparkle },
+  { href: "/adults-fajr", label: "منبّه الفجر", icon: IconAlarm },
+];
+
+function AdultShell({ children, path }: { children: ReactNode; path: string }) {
+  return (
+    <div className="min-h-dvh bg-[#fbf8f2]">
+      <header className="sticky top-0 z-40 border-b border-ink-300/25 bg-[#fbf8f2]/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+          <Link href="/adults" className="flex items-center gap-2" aria-label="ركن الكبار">
+            <Logo size={34} />
+            <span className="font-display text-lg font-extrabold text-ink-900">ركن الكبار</span>
+          </Link>
+          <nav className="mx-auto hidden items-center gap-1 lg:flex" aria-label="ركن الكبار">
+            {ADULT_NAV.map((n) => (
+              <Link key={n.href} href={n.href} className={`rounded-xl px-3 py-2 text-sm font-bold ${path === n.href ? "bg-ink-900 text-white" : "text-ink-700 hover:bg-white"}`}>
+                {n.label}
+              </Link>
+            ))}
+          </nav>
+          <Link href="/kids" className="mr-auto rounded-xl bg-white px-3 py-2 text-xs font-bold text-teal-700 ring-1 ring-ink-300/30 lg:mr-0">
+            عالم الأطفال
+          </Link>
+        </div>
+      </header>
+      <main className="mx-auto max-w-5xl px-4 pb-32 pt-5 lg:pb-16">{children}</main>
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-300/25 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="ركن الكبار">
+        <div className="mx-auto flex max-w-md justify-around px-2 py-1.5">
+          {ADULT_NAV.map((n) => {
+            const active = path === n.href;
+            return (
+              <Link key={n.href} href={n.href} className="flex flex-1 flex-col items-center gap-0.5 py-1" aria-current={active ? "page" : undefined}>
+                <n.icon size={22} className={active ? "text-teal-700" : "text-ink-500"} />
+                <span className={`text-[11px] font-bold ${active ? "text-teal-700" : "text-ink-500"}`}>{n.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
+  );
+}
+
 export function AppShell({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+  const path = usePathname();
+  if (isAdultArea(path)) return <AdultShell path={path}>{children}</AdultShell>;
+  return <KidsShell wide={wide}>{children}</KidsShell>;
+}
+
+function KidsShell({ children, wide }: { children: ReactNode; wide: boolean }) {
   const path = usePathname();
   const { child, data } = useChild();
   const s = streak(data.activeDays);

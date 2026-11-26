@@ -6,8 +6,14 @@
 import { useSyncExternalStore } from "react";
 import { cityById, METHODS, type MethodId } from "./places";
 
-export type ChallengeId = "dua" | "count" | "colors";
-export const CHALLENGES: ChallengeId[] = ["dua", "count", "colors"];
+/** Who the alarm wakes: a child (gentle games) or an adult (arithmetic and memory). */
+export type Level = "kid" | "adult";
+type KidChallenge = "dua" | "count" | "colors";
+type AdultChallenge = "math" | "memory";
+export type ChallengeId = KidChallenge | AdultChallenge;
+const KID_CHALLENGES: KidChallenge[] = ["dua", "count", "colors"];
+const ADULT_CHALLENGES: AdultChallenge[] = ["math", "memory"];
+export const challengesFor = (level: Level): ChallengeId[] => (level === "kid" ? [...KID_CHALLENGES] : [...ADULT_CHALLENGES]);
 
 export type Place = { kind: "city"; id: string } | { kind: "gps"; lat: number; lng: number };
 
@@ -23,8 +29,11 @@ export interface FajrSettings {
   method: MethodId;
   /** Minutes relative to the Fajr adhan (negative = before). */
   offset: number;
-  /** Selected challenges; one is picked at random each morning. */
+  level: Level;
+  /** Selected challenges (of the level); one is picked at random each morning. */
   challenges: ChallengeId[];
+  /** Adult arithmetic and memory difficulty, 1..3. */
+  difficulty: 1 | 2 | 3;
   wakeCheck: boolean;
   /** Sunday..Saturday (Date.getDay order). */
   days: boolean[];
@@ -40,7 +49,9 @@ export const DEFAULT_SETTINGS: FajrSettings = {
   place: null,
   method: "Egyptian",
   offset: 0,
+  level: "kid",
   challenges: ["dua", "count", "colors"],
+  difficulty: 2,
   wakeCheck: true,
   days: [true, true, true, true, true, true, true],
   log: {},
@@ -49,7 +60,7 @@ export const DEFAULT_SETTINGS: FajrSettings = {
 
 const KEY = "rifq.fajr.v1";
 const METHOD_IDS = new Set(METHODS.map((m) => m.id));
-const ALL_CHALLENGES = new Set<string>(CHALLENGES);
+
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const finite = (v: unknown, lo: number, hi: number): v is number => typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi;
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -72,10 +83,13 @@ export function sanitizeSettings(raw: unknown): FajrSettings {
   s.place = sanitizePlace(raw.place);
   if (typeof raw.method === "string" && METHOD_IDS.has(raw.method as MethodId)) s.method = raw.method as MethodId;
   if (finite(raw.offset, -60, 60)) s.offset = Math.round(raw.offset);
+  if (raw.level === "kid" || raw.level === "adult") s.level = raw.level;
+  const allowed = new Set<string>(challengesFor(s.level));
   if (Array.isArray(raw.challenges)) {
-    const list = [...new Set(raw.challenges.filter((x): x is ChallengeId => typeof x === "string" && ALL_CHALLENGES.has(x)))];
-    s.challenges = list.length ? list : [...CHALLENGES];
-  } else s.challenges = [...CHALLENGES];
+    const list = [...new Set(raw.challenges.filter((x): x is ChallengeId => typeof x === "string" && allowed.has(x)))];
+    s.challenges = list.length ? list : challengesFor(s.level);
+  } else s.challenges = challengesFor(s.level);
+  if (raw.difficulty === 1 || raw.difficulty === 2 || raw.difficulty === 3) s.difficulty = raw.difficulty;
   if (typeof raw.wakeCheck === "boolean") s.wakeCheck = raw.wakeCheck;
   if (Array.isArray(raw.days) && raw.days.length === 7 && raw.days.every((d) => typeof d === "boolean")) s.days = [...raw.days];
   if (isObj(raw.log)) {

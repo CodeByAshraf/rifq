@@ -1,3 +1,4 @@
+import { inAdultArea } from "@/lib/area";
 /**
  * Playful feedback for children: tap bursts, button "boing", and soft synthesized sounds.
  * Sounds are simple UI tones made with the Web Audio API — never recitation or speech.
@@ -79,7 +80,7 @@ function userHasInteracted() {
 let interacted = false;
 
 export function playSfx(kind: Sfx) {
-  if (!isSoundOn() || !userHasInteracted()) return;
+  if (!isSoundOn() || !userHasInteracted() || inAdultArea()) return;
   switch (kind) {
     case "tap":
       tone(620, 0, 0.09, 0.045, "sine", 880);
@@ -174,12 +175,13 @@ export function installTapEffects() {
   const down = (e: PointerEvent) => {
     interacted = true;
     lastTap = { x: e.clientX, y: e.clientY, at: Date.now() };
+    if (inAdultArea()) return; // the adults' corner stays calm
     burst(e.clientX, e.clientY);
     const target = (e.target as Element | null)?.closest(INTERACTIVE);
     if (target) playSfx("tap");
   };
   const up = (e: PointerEvent) => {
-    if (reduced()) return;
+    if (reduced() || inAdultArea()) return;
     const el = (e.target as Element | null)?.closest<HTMLElement>("button, a, .clay");
     if (!el || (el as HTMLButtonElement).disabled) return;
     el.classList.remove("boing");

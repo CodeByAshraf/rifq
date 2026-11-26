@@ -4,6 +4,8 @@ import { MagdyImage } from "@/components/art/Magdy";
 import { IconCheck, IconFamily, IconFlame, IconHome, IconLantern, IconRefresh, IconShield, IconSparkle, IconSprout, IconStar, IconUser } from "@/components/art/Icons";
 import { AyahMark, VerseText } from "@/components/quran/VerseText";
 import { AppShell } from "@/components/shell/AppShell";
+import { isAdultArea } from "@/lib/area";
+import { usePathname } from "@/lib/router";
 import { Card, Celebrate, Chip, Modal, ProgressBar } from "@/components/ui";
 import adhkar from "@/data/adhkar.json";
 import { playSfx } from "@/lib/fx";
@@ -97,6 +99,7 @@ function ZekrBody({ z, big = false }: { z: Zekr; big?: boolean }) {
 }
 
 export function Adhkar() {
+  const adult = isAdultArea(usePathname());
   const { data } = useChild();
   const hour = new Date().getHours();
   const [tab, setTab] = useState<string>(hour < 12 ? "morning" : hour < 20 ? "evening" : "daily");
@@ -111,17 +114,19 @@ export function Adhkar() {
       <div className="relative overflow-hidden rounded-[2.2rem] bg-gradient-to-l from-teal-500 to-teal-700 p-7 text-white shadow-lift sm:p-9">
         <div className="pattern-girih absolute inset-0 opacity-50 mix-blend-overlay" />
         <div className="relative flex items-center gap-5">
-          <MagdyImage size={140} className="hidden shrink-0 drop-shadow-xl sm:block" />
+          {!adult && <MagdyImage size={140} className="hidden shrink-0 drop-shadow-xl sm:block" />}
           <div>
             <h1 className="font-display text-4xl font-extrabold">الأذكار والأدعية</h1>
             <p className="mt-2 max-w-lg text-teal-50">ابدأ يومك واختمه بذكر الله، فذكر الله نورٌ للقلب وطمأنينة.</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {(["morning", "evening"] as const).map((k) => (
-                <Chip key={k} className={doneToday.includes(k) ? "bg-white text-teal-700" : "bg-white/20 text-white"}>
-                  {doneToday.includes(k) && <IconCheck size={14} />} {k === "morning" ? "أذكار الصباح" : "أذكار المساء"}
-                </Chip>
-              ))}
-            </div>
+            {!adult && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(["morning", "evening"] as const).map((k) => (
+                  <Chip key={k} className={doneToday.includes(k) ? "bg-white text-teal-700" : "bg-white/20 text-white"}>
+                    {doneToday.includes(k) && <IconCheck size={14} />} {k === "morning" ? "أذكار الصباح" : "أذكار المساء"}
+                  </Chip>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -154,7 +159,7 @@ export function Adhkar() {
               })}
             </div>
           ) : section ? (
-            <SectionReader key={section.id} section={section} done={doneToday.includes(section.id)} />
+            <SectionReader key={section.id} section={section} done={!adult && doneToday.includes(section.id)} adult={adult} />
           ) : null}
         </motion.div>
       </AnimatePresence>
@@ -183,7 +188,7 @@ export function Adhkar() {
   );
 }
 
-function SectionReader({ section, done }: { section: Section; done: boolean }) {
+function SectionReader({ section, done, adult }: { section: Section; done: boolean; adult: boolean }) {
   const [left, setLeft] = useState<Record<string, number>>(() => Object.fromEntries(section.items.map((z) => [z.id, z.count])));
   const [celebrate, setCelebrate] = useState(false);
   const total = useMemo(() => section.items.reduce((n, z) => n + z.count, 0), [section]);
@@ -197,7 +202,8 @@ function SectionReader({ section, done }: { section: Section; done: boolean }) {
     if (navigator.vibrate) navigator.vibrate(12);
     if (nx[z.id] === 0) playSfx("correct");
     if (Object.values(nx).every((x) => x === 0)) {
-      actions.completeAdhkar(section.id, `${section.title}`);
+      // Stars and certificates belong to the child's profile, not to an adult reading here.
+      if (!adult) actions.completeAdhkar(section.id, `${section.title}`);
       setCelebrate(true);
     }
   };
@@ -254,7 +260,7 @@ function SectionReader({ section, done }: { section: Section; done: boolean }) {
           );
         })}
       </div>
-      <Celebrate open={celebrate} onClose={() => setCelebrate(false)} title="تقبّل الله منك" message={`أتممتَ ${section.title}. نسأل الله أن يحفظك ويبارك في يومك.`} stars={done ? undefined : 3} />
+      <Celebrate open={celebrate} onClose={() => setCelebrate(false)} title="تقبّل الله منك" message={`أتممتَ ${section.title}. نسأل الله أن يحفظك ويبارك في يومك.`} stars={done || adult ? undefined : 3} />
     </>
   );
 }

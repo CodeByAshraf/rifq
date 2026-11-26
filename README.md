@@ -3,8 +3,9 @@
 An Arabic-first (RTL) Quran learning app for children, for Android and iOS:
 reading with verse-by-verse recitation and repetition, a 7-step memorization flow,
 spaced-repetition revision, a Tajweed academy, six educational mini-games, stories, a journey
-map with rewards, and a parents' corner (behind a parental gate) for the family account,
-children's progress, the reminder and the Fajr alarm.
+map with rewards, a parents' corner (behind a parental gate) for the family account,
+children's progress, the reminder and the Fajr alarm, and an adults' corner with the full
+Mushaf page by page, the adhkar and an adult Fajr alarm.
 
 ## Stack
 Capacitor 8 (Android + iOS) · React · TypeScript · Tailwind CSS v4 · Framer Motion · esbuild · Supabase (optional)
@@ -99,6 +100,13 @@ scripts/            build, content import/verification, tests, native config, st
 - **My recitation** (`/recite`): records with MediaRecorder, stores only in IndexedDB on the device, compare with reciter.
 - **Challenges** (`/challenges`): Friday Al-Kahf, Ramadan khatma, first ten days of Dhul-Hijjah (Umm al-Qura calendar).
 - **Reminder** (`/app`): a daily local notification, an in-app reminder, and "delete all data on this device".
+- **Adults' corner** (`/adults`): a calm area with its own navigation (no tap effects or sounds).
+  - **Mushaf** (`/mushaf`): the Madinah Mushaf page by page (604 pages × 15 lines) in the KFGQPC font, built by
+    `npm run build:mushaf` from the KFGQPC Hafs v3.0 data and checked āyah by āyah against the verified text
+    (`npm run verify:mushaf`, part of every build). Swipe or buttons to turn pages, an index (surahs, juz', page
+    number), automatic last-read page, a bookmark, and a tap on any āyah for its tafsir, word meanings or recitation
+    (one āyah, or continuously with page turning). Pages are small local files read on demand.
+  - **Adhkar** (`/adults-adhkar`) and the **Fajr alarm** for an adult (arithmetic or memory challenges).
 - **Parents' corner** (`/parents`): account, family, reminder, Fajr alarm settings and sharing. These screens open
   only after a multiplication written in words is answered (`src/lib/parental-gate.ts`), as the stores' kids
   rules require; the unlock lasts 5 minutes and is never stored.

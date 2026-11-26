@@ -121,7 +121,8 @@ testing first.
   - The plan is renewed every time the app opens. Solving the challenge cancels the rest of the burst.
 - **"Still awake?" check:** comes 5 minutes after solving; if it is not answered within 2 minutes, the alarm rings again.
 - **Challenges:**
-  - Order the waking dua (its exact text from `adhkar.json`), count, or repeat a colour sequence.
+  - Child: order the waking dua (its exact text from `adhkar.json`), count, or repeat a colour sequence.
+  - Adult: arithmetic or a memory grid, with three difficulty levels.
   - Parents choose the city, time and challenges in the parents' corner; the wake-up screen itself is never gated.
 - **Limits of this version:**
   - Notifications follow the phone's silent and Do Not Disturb settings.

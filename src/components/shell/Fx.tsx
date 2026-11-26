@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { inAdultArea } from "@/lib/area";
 import { getLastTap, installTapEffects, isSoundOn, playSfx, setSound, subscribeSound } from "@/lib/fx";
 
 /** Installs global tap bursts + press bounce. Render once near the root. */
@@ -57,12 +58,12 @@ function AnimatedEntry({ children }: { children: ReactNode }) {
   const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
-    if (!reduced) playSfx("page");
+    if (!reduced && !inAdultArea()) playSfx("page");
     const t = setTimeout(() => setOverlay(false), 900);
     return () => clearTimeout(t);
   }, [reduced]);
 
-  if (reduced) {
+  if (reduced || inAdultArea()) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35, ease: "easeOut" }}>
         {children}

@@ -2,6 +2,8 @@
 import type { ReactElement } from "react";
 import { useProgress } from "@/lib/store";
 import { Adhkar } from "@/components/screens/Adhkar";
+import { AdultHome } from "@/components/screens/AdultHome";
+import { MushafReader } from "@/components/screens/MushafReader";
 import { AppSettings } from "@/components/screens/AppSettings";
 import { Certificates } from "@/components/screens/Certificates";
 import { Challenges } from "@/components/screens/Challenges";
@@ -43,6 +45,10 @@ export const ROUTES: Record<string, () => ReactElement> = {
   "/stories": Stories,
   "/revision": Revision,
   "/parents": Parents,
+  "/adults": AdultHome,
+  "/mushaf": MushafReader,
+  "/adults-adhkar": Adhkar,
+  "/adults-fajr": Fajr,
   "/family": Family,
   "/login": Login,
   "/welcome": Welcome,

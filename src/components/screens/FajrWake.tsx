@@ -33,6 +33,7 @@ function pickChallenge(list: ChallengeId[]): ChallengeId {
 
 export function FajrWake() {
   const s = useFajrSettings();
+  const kid = s.level === "kid";
   const now = useNow();
   const p = phase(s, now);
   const [started, setStarted] = useState(false);
@@ -73,15 +74,15 @@ export function FajrWake() {
           <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-mint-400 text-white">
             <IconCheck size={44} />
           </div>
-          <h1 className="mt-4 font-display text-4xl font-extrabold">{finished.practice ? "أحسنت! هكذا يعمل التحدّي" : "أحسنت يا بطل!"}</h1>
+          <h1 className="mt-4 font-display text-4xl font-extrabold">{finished.practice ? "أحسنت! هكذا يعمل التحدّي" : kid ? "أحسنت يا بطل!" : "صباح الخير"}</h1>
           <div className="mt-5 rounded-3xl bg-white/95 p-5 text-ink-900">
             <div className="text-sm font-bold text-teal-700">دعاء الاستيقاظ</div>
             <p className="mt-2 font-display text-2xl font-bold leading-loose">{dua.text}</p>
             <div className="mt-1 text-xs text-ink-500">رواه {dua.source}</div>
           </div>
-          {!finished.practice && <p className="mt-4 text-lg text-white/90">توضّأ وصلِّ الفجر، تقبّل الله منك.</p>}
+          {!finished.practice && <p className="mt-4 text-lg text-white/90">{kid ? "توضّأ وصلِّ الفجر، تقبّل الله منك." : "قُم فتوضّأ وصلِّ، تقبّل الله منك."}</p>}
           {!finished.practice && s.wakeCheck && <p className="mt-2 text-sm text-white/70">سنسألك بعد ٥ دقائق: هل ما زلت مستيقظًا؟</p>}
-          <Link href="/kids" className="mt-6 inline-block font-bold text-white/80 underline-offset-4 hover:underline">
+          <Link href={kid ? "/kids" : "/adults"} className="mt-6 inline-block font-bold text-white/80 underline-offset-4 hover:underline">
             إلى رِفق
           </Link>
         </div>
@@ -96,7 +97,7 @@ export function FajrWake() {
             <MagdyImage size={150} className="mx-auto drop-shadow-xl" />
             <div className="mt-2 font-display text-6xl font-extrabold">{clock(now.getTime())}</div>
             <h1 className="mt-3 font-display text-3xl font-extrabold">{practice ? "تجربة التحدّي" : again ? "لم تؤكّد أنّك مستيقظ!" : "حان وقت صلاة الفجر"}</h1>
-            {!practice && <p className="mt-2 text-lg text-white/85">اصحَ يا بطل، حلّ التحدّي ليسكت المنبّه</p>}
+            {!practice && <p className="mt-2 text-lg text-white/85">{kid ? "اصحَ يا بطل، حلّ التحدّي ليسكت المنبّه" : "الصلاة خيرٌ من النوم"}</p>}
             <Button tone="sun" size="lg" className="mt-8 w-full" onClick={start}>
               ابدأ التحدّي: {CHALLENGE_TITLES[challenge]}
             </Button>
@@ -106,7 +107,7 @@ export function FajrWake() {
       }
       return (
         <div data-wake-lock={ringing ? "" : undefined}>
-          <WakeChallenge id={challenge} onDone={solved} />
+          <WakeChallenge id={challenge} difficulty={s.difficulty} onDone={solved} />
         </div>
       );
     }

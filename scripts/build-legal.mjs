@@ -97,7 +97,7 @@ await build({
   bundle: true,
   minify: true,
   outfile: path.join(out, "fonts.css"),
-  loader: { ".woff2": "file", ".woff": "file" },
+  loader: { ".woff2": "file", ".woff": "file", ".ttf": "file" },
   assetNames: "fonts/[name]-[hash]",
   logLevel: "warning",
 });

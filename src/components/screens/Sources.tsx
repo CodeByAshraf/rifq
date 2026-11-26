@@ -64,6 +64,18 @@ export function Sources() {
           </p>
         </Section>
 
+        <Section title="مصحف ركن الكبار (صفحة بصفحة)">
+          <p>
+            صفحات مصحف المدينة النبوية (٦٠٤ صفحات، ١٥ سطرًا) بنصّ وتوزيع أسطر إصدار مجمع الملك فهد UthmanicHafs v3.0 من مشروع{" "}
+            <Ext href="https://github.com/quran-ws/quran-text">quran-text</Ext> (CC BY 4.0). تُطابَق كلّ آيةٍ في الصفحات حرفًا
+            وتشكيلًا مع النصّ المعروض في بقيّة التطبيق قبل كلّ إصدار.
+          </p>
+          <p>
+            الخطّ: «KFGQPC HAFS Uthmanic Script» © مجمع الملك فهد لطباعة المصحف الشريف، مُضمَّنٌ كما هو دون أيّ تعديل وفق
+            ترخيصه الذي يسمح بالاستخدام والنسخ والتوزيع مجانًا.
+          </p>
+        </Section>
+
         <Section title="التلاوات">
           <p>
             تسجيلات آيةً آية من <Ext href="https://everyayah.com">EveryAyah.com</Ext> بأصوات: {RECITERS.map((r) => r.name).join("، ")}.

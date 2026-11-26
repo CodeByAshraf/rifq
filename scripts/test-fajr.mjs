@@ -17,7 +17,8 @@ await build({
       export * as challenges from "./src/lib/fajr/challenges";
       export * as places from "./src/lib/fajr/places";
       export * as locate from "./src/lib/fajr/locate";
-      export * as gate from "./src/lib/parental-gate";`,
+      export * as gate from "./src/lib/parental-gate";
+      export * as mushaf from "./src/lib/mushaf";`,
     resolveDir: root,
     loader: "ts",
   },
@@ -28,7 +29,7 @@ await build({
   logLevel: "error",
   external: ["react", "@capacitor/*"],
 });
-const { times, settings, challenges, places, locate, gate } = await import(out);
+const { times, settings, challenges, places, locate, gate, mushaf } = await import(out);
 
 let groups = 0;
 const group = (name, fn) => {
@@ -162,7 +163,12 @@ group("settings: anything stored is validated", () => {
   assert.equal(junk.method, "Egyptian");
   assert.equal(junk.offset, 0);
   assert.deepEqual(junk.challenges, ["dua"], "unknown challenges dropped");
-  assert.deepEqual(settings.sanitizeSettings({ challenges: ["math", "photo"] }).challenges, ["dua", "count", "colors"], "old adult challenges fall back to the kids' set");
+  assert.equal(junk.level, "kid");
+  assert.deepEqual(settings.sanitizeSettings({ challenges: ["math", "photo"] }).challenges, ["dua", "count", "colors"], "a child's alarm never gets adult challenges");
+  const adult = settings.sanitizeSettings({ level: "adult", challenges: ["math", "dua", "photo"], difficulty: 3 });
+  assert.deepEqual(adult.challenges, ["math"], "only the level's challenges; the removed photo challenge is dropped");
+  assert.equal(adult.difficulty, 3);
+  assert.equal(settings.sanitizeSettings({ level: "root", difficulty: 9 }).difficulty, 2);
   assert.equal(junk.days.length, 7);
   assert.deepEqual(Object.keys(junk.log), ["2026-11-18"]);
   assert.equal(junk.testAt, null);
@@ -192,13 +198,20 @@ group("dua puzzle uses the exact verified text and is never pre-solved", () => {
   }
 });
 
-group("counting and colour generators; number parsing; parental gate", () => {
+group("challenge generators (children and adults); number parsing; parental gate", () => {
   for (let i = 0; i < 300; i++) {
     for (const r of challenges.countRounds(rnd)) {
       assert.ok(r.options.includes(r.n) && new Set(r.options).size === 3 && r.options.every((o) => o >= 1 && o <= 12));
     }
     const seq = challenges.colorSequence(rnd, 4);
     assert.ok(seq.every((v, k) => v >= 0 && v < 4 && (k === 0 || v !== seq[k - 1])));
+    for (const d of [1, 2, 3]) {
+      const p = challenges.mathProblem(rnd, d);
+      assert.equal(Function(`return ${p.text.replace("×", "*")}`)(), p.answer, p.text);
+      assert.ok(p.answer > 20 && p.answer < 2000);
+    }
+    const cells = challenges.memoryCells(rnd, 6);
+    assert.ok(cells.length === 6 && new Set(cells).size === 6 && cells.every((c) => c >= 0 && c < 16));
     const q = gate.gateQuestion(rnd);
     const words = ["ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
     const [a, b] = q.text.split(" × ").map((w) => words.indexOf(w) + 3);
@@ -215,6 +228,22 @@ group("counting and colour generators; number parsing; parental gate", () => {
   assert.equal(gate.isUnlocked(1000 + 6 * 60_000), false, "the gate locks again after a few minutes");
   for (const r of ["/parents", "/family", "/login", "/app", "/fajr"]) assert.ok(gate.PARENT_ROUTES.has(r), r);
   assert.ok(!gate.PARENT_ROUTES.has("/fajr-wake"), "the wake-up screen must never be gated");
+});
+
+group("Mushaf reader: navigation index and saved position", () => {
+  assert.equal(mushaf.MUSHAF_INDEX.surah.length, 114);
+  assert.equal(mushaf.MUSHAF_INDEX.page.length, 604);
+  assert.equal(mushaf.MUSHAF_INDEX.surah[1], 2, "Al-Baqarah starts on page 2");
+  assert.equal(mushaf.MUSHAF_INDEX.surah[35], 440, "Ya-Sin starts on page 440");
+  assert.equal(mushaf.MUSHAF_INDEX.juz[29], 582, "Juz' Amma starts on page 582");
+  assert.equal(mushaf.surahOfPage(440), 35, "page 440 opens with the end of Fatir");
+  assert.equal(mushaf.juzOfPage(604), 30);
+  assert.equal(mushaf.clampPage(0), 1);
+  assert.equal(mushaf.clampPage(9999), 604);
+  assert.equal(mushaf.ayahEnd(255), "\u06DD٢٥٥");
+  assert.deepEqual(mushaf.sanitizeReader({ last: 700, mark: { p: 3, s: 999, a: 1, at: 1 } }), { last: 1, mark: null });
+  assert.deepEqual(mushaf.sanitizeReader({ last: 50, mark: { p: 50, s: 3, a: 7, at: 5 }, x: "<b>" }), { last: 50, mark: { p: 50, s: 3, a: 7, at: 5 } });
+  assert.deepEqual(mushaf.sanitizeReader("junk"), { last: 1, mark: null });
 });
 
 console.log(`fajr: ${groups} test groups passed`);

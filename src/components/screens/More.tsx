@@ -19,6 +19,7 @@ const ITEMS = [
   { href: "/play", title: "العب وتعلّم", text: "ستّ ألعاب تعليمية", icon: IconPuzzle, tone: "from-sun-400 to-sun-500 text-ink-900" },
   { href: "/stories", title: "حكايات رِفق", text: "قصصٌ قصيرة تزرع القيم", icon: IconStories, tone: "from-coral-300 to-coral-500 text-white" },
   { href: "/fajr-wake", title: "تحدّي الاستيقاظ", text: "جرّب ألعاب منبّه الفجر", icon: IconAlarm, tone: "from-[#27407a] to-teal-600 text-white" },
+  { href: "/adults", title: "ركن الكبار", text: "المصحف كاملًا، والأذكار، ومنبّه الفجر", icon: IconBook, tone: "from-teal-700 to-[#0a4f49] text-white" },
   { href: "/parents", title: "ركن الوالدين", text: "الحساب والمتابعة والمنبّه والإعدادات", icon: IconShield, tone: "from-ink-500 to-ink-700 text-white" },
 ];
 

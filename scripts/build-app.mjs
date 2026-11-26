@@ -74,7 +74,7 @@ await build({
   bundle: true,
   minify: true,
   outfile: path.join(out, "fonts.css"),
-  loader: { ".woff2": "file", ".woff": "file" },
+  loader: { ".woff2": "file", ".woff": "file", ".ttf": "file" },
   assetNames: "fonts/[name]-[hash]",
   logLevel: "warning",
 });
@@ -117,7 +117,7 @@ ${dev ? '<script src="dev-reload.js"></script>\n' : ""}</body>
 `,
 );
 
-for (const dir of ["quran", "tafsir", "characters", "icons"]) cpSync(path.join(root, "public", dir), path.join(out, dir), { recursive: true });
+for (const dir of ["quran", "tafsir", "mushaf", "characters", "icons"]) cpSync(path.join(root, "public", dir), path.join(out, dir), { recursive: true });
 
 if (dev) {
   // Live reload through esbuild's change events (a separate file keeps the CSP strict).
