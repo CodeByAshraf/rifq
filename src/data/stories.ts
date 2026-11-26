@@ -7,8 +7,8 @@
  *   always rendered from the verified Quran files at runtime.
  * - Prophets and Companions are never illustrated; scenes show places and objects only.
  *   Cartoon characters appear only in the clearly-labelled fictional "akhlaq" stories.
- * - Every story carries `review: "pending"` until approved by a qualified teacher. The retellings
- *   were checked against the Quran verses and hadith sources named in `source`.
+ * - Review: the retellings were checked against the Quran verses and hadith sources named in
+ *   `source` and approved by the app owner (2026-11-26).
  */
 
 export type StoryCategory = "anbiya" | "quran" | "seerah" | "sahaba" | "akhlaq";
@@ -70,7 +70,7 @@ export const STORIES: Story[] = [
       { q: "ماذا أمر الله نوحًا أن يصنع؟", options: ["سفينة", "بيتًا", "بئرًا"], answer: 0 },
       { q: "كيف كان نوحٌ يعمل رغم سخرية قومه؟", options: ["بغضب", "بصبر", "توقّف عن العمل"], answer: 1 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "ibrahim-fire",
@@ -91,7 +91,7 @@ export const STORIES: Story[] = [
       { q: "ماذا حدث للنار بأمر الله؟", options: ["صارت أكبر", "صارت بردًا وسلامًا", "انطفأت بالماء"], answer: 1 },
       { q: "ماذا تعلّمنا من القصة؟", options: ["الشجاعة في قول الحق", "الخوف من الناس", "السكوت عن الخطأ"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "yunus-whale",
@@ -112,7 +112,7 @@ export const STORIES: Story[] = [
       { q: "ماذا فعل يونس في بطن الحوت؟", options: ["نام", "دعا الله وسبّحه", "بكى فقط"], answer: 1 },
       { q: "ماذا أنبت الله عليه على الشاطئ؟", options: ["نخلة", "شجرة يقطين", "زهرة"], answer: 1 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "musa-sea",
@@ -133,7 +133,7 @@ export const STORIES: Story[] = [
       { q: "بماذا ضرب موسى البحر؟", options: ["بحجر", "بعصاه", "بيده"], answer: 1 },
       { q: "ماذا صار البحر؟", options: ["طريقًا يعبرون فيه", "جبلًا", "نهرًا صغيرًا"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "yusuf-dream",
@@ -154,7 +154,7 @@ export const STORIES: Story[] = [
       { q: "كم كوكبًا رأى يوسف في رؤياه؟", options: ["سبعة", "أحد عشر", "عشرة"], answer: 1 },
       { q: "ماذا فعل يوسف مع إخوته في النهاية؟", options: ["عاقبهم", "عفا عنهم", "لم يكلّمهم"], answer: 1 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "sulayman-ant",
@@ -175,7 +175,7 @@ export const STORIES: Story[] = [
       { q: "بماذا نصحت النملةُ بقيّة النمل؟", options: ["أن يهربوا إلى النهر", "أن يدخلوا مساكنهم", "أن يختبئوا تحت الورق"], answer: 1 },
       { q: "ماذا فعل سليمان عندما سمعها؟", options: ["تبسّم وشكر الله", "غضب", "لم ينتبه"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "sulayman-hoopoe",
@@ -196,7 +196,7 @@ export const STORIES: Story[] = [
       { q: "من أين جاء الهدهد بالخبر؟", options: ["من سبأ", "من مصر", "من مكة"], answer: 0 },
       { q: "ماذا أرسل سليمان إلى ملكة سبأ؟", options: ["جيشًا", "رسالة يدعوها إلى الله", "هدية فقط"], answer: 1 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "salih-camel",
@@ -217,7 +217,7 @@ export const STORIES: Story[] = [
       { q: "ماذا كانت آية قوم صالح؟", options: ["ناقة", "سفينة", "نار"], answer: 0 },
       { q: "من الذي نجّاه الله؟", options: ["صالح ومن آمن معه", "كلّ القوم", "لا أحد"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "ibrahim-kaaba",
@@ -238,7 +238,7 @@ export const STORIES: Story[] = [
       { q: "من بنى الكعبة مع إبراهيم؟", options: ["ابنه إسماعيل", "نوح", "موسى"], answer: 0 },
       { q: "ماذا كانا يقولان وهما يعملان؟", options: ["ربّنا تقبّل منّا", "نحن تعبنا", "لا شيء"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "ayyub-patience",
@@ -259,7 +259,7 @@ export const STORIES: Story[] = [
       { q: "بماذا اشتهر أيّوب عليه السلام؟", options: ["بالصبر", "بالسفر", "بالتجارة"], answer: 0 },
       { q: "إلى من كان أيّوب يشكو؟", options: ["إلى الناس", "إلى الله وحده", "لم يكن يدعو"], answer: 1 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "zakariya-yahya",
@@ -280,7 +280,7 @@ export const STORIES: Story[] = [
       { q: "ما اسم الابن الذي بشّر الله به زكريّا؟", options: ["يحيى", "يوسف", "إسماعيل"], answer: 0 },
       { q: "ماذا نتعلّم من القصة؟", options: ["ألّا نملّ من الدعاء", "أن ندعو مرة واحدة فقط", "ألّا نطلب من الله"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "maryam-palm",
@@ -301,7 +301,7 @@ export const STORIES: Story[] = [
       { q: "ماذا تساقط من النخلة؟", options: ["رطب", "تفاح", "ورق فقط"], answer: 0 },
       { q: "من النبيّ الذي تكلّم في المهد؟", options: ["عيسى", "يحيى", "موسى"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
 
   // ---------------- Stories from the Quran ----------------
@@ -324,7 +324,7 @@ export const STORIES: Story[] = [
       { q: "ماذا أراد أبرهة أن يفعل؟", options: ["أن يهدم الكعبة", "أن يزور مكة", "أن يتاجر"], answer: 0 },
       { q: "ماذا أرسل الله على الجيش؟", options: ["مطرًا", "طيرًا أبابيل", "ريحًا"], answer: 1 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "kahf",
@@ -345,7 +345,7 @@ export const STORIES: Story[] = [
       { q: "أين لجأ الفتية؟", options: ["إلى كهف", "إلى سفينة", "إلى قصر"], answer: 0 },
       { q: "من كان معهم عند المدخل؟", options: ["قطّة", "كلبهم", "حصان"], answer: 1 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "luqman",
@@ -366,7 +366,7 @@ export const STORIES: Story[] = [
       { q: "كيف كان لقمان ينادي ابنه؟", options: ["يا بُنيّ", "يا ولد", "لم يكن يناديه"], answer: 0 },
       { q: "بماذا أوصاه في المشي بين الناس؟", options: ["أن يتواضع", "أن يركض", "أن يتكبّر"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
 
   // ---------------- Seerah ----------------
@@ -389,7 +389,7 @@ export const STORIES: Story[] = [
       { q: "ما أوّل كلمة نزلت من القرآن؟", options: ["اقرأ", "قل", "الحمد"], answer: 0 },
       { q: "من طمأن النبي ﷺ عندما رجع؟", options: ["خديجة رضي الله عنها", "أبو بكر", "جاره"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "hijra",
@@ -410,7 +410,7 @@ export const STORIES: Story[] = [
       { q: "إلى أين هاجر النبي ﷺ؟", options: ["المدينة", "مصر", "الشام"], answer: 0 },
       { q: "من كان صاحب النبي ﷺ في الغار؟", options: ["أبو بكر الصديق", "عمر بن الخطاب", "بلال"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "black-stone",
@@ -430,7 +430,7 @@ export const STORIES: Story[] = [
       { q: "بماذا كانت قريش تلقّب النبي ﷺ؟", options: ["الأمين", "القوي", "الغني"], answer: 0 },
       { q: "كيف حلّ النبي ﷺ الخلاف؟", options: ["جعل كلّ القبائل تشارك في رفع الحجر", "اختار قبيلةً واحدة", "ترك الحجر"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "masjid",
@@ -450,7 +450,7 @@ export const STORIES: Story[] = [
       { q: "ماذا بنى النبي ﷺ في المدينة؟", options: ["المسجد", "قصرًا", "سوقًا فقط"], answer: 0 },
       { q: "هل شارك النبي ﷺ في البناء؟", options: ["نعم، حمل اللَّبِن بنفسه", "لا", "شاهد فقط"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "isra",
@@ -471,7 +471,7 @@ export const STORIES: Story[] = [
       { q: "إلى أين أُسري بالنبي ﷺ؟", options: ["المسجد الأقصى", "المدينة", "الطائف"], answer: 0 },
       { q: "بماذا لُقّب أبو بكر؟", options: ["الصدّيق", "الفاروق", "ذو النورين"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "abu-umair",
@@ -491,7 +491,7 @@ export const STORIES: Story[] = [
       { q: "ماذا كان عند أبي عُمير؟", options: ["عصفور صغير", "قطّة", "كرة"], answer: 0 },
       { q: "كيف عامل النبي ﷺ الطفل الحزين؟", options: ["واساه بلطف", "تجاهله", "ضحك عليه"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
 
   // ---------------- Companions ----------------
@@ -513,7 +513,7 @@ export const STORIES: Story[] = [
       { q: "ماذا كان بلال يردّد؟", options: ["أحدٌ أحد", "أنا متعب", "لا شيء"], answer: 0 },
       { q: "ماذا صار بلال بعد ذلك؟", options: ["مؤذّن الرسول ﷺ", "تاجرًا", "شاعرًا"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "anas",
@@ -533,7 +533,7 @@ export const STORIES: Story[] = [
       { q: "كم سنةً خدم أنسٌ النبيَّ ﷺ؟", options: ["عشر سنين", "سنة واحدة", "عشرين سنة"], answer: 0 },
       { q: "ماذا تعلّمنا من القصة؟", options: ["الرفق وحسن الخلق", "الغضب السريع", "كثرة اللوم"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "uthman-well",
@@ -553,7 +553,7 @@ export const STORIES: Story[] = [
       { q: "ماذا اشترى عثمان رضي الله عنه؟", options: ["بئرًا", "بستانًا", "بيتًا"], answer: 0 },
       { q: "لمن جعل ماءها؟", options: ["لكلّ الناس", "لنفسه فقط", "للتجّار"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
 
   // ---------------- Akhlaq (fictional, clearly labelled) ----------------
@@ -576,7 +576,7 @@ export const STORIES: Story[] = [
       { q: "ماذا قدّمت سلمى للرجل؟", options: ["رغيفًا", "ماءً", "لا شيء"], answer: 0 },
       { q: "كيف شعرت سلمى بعدها؟", options: ["بالسعادة", "بالحزن", "بالندم"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "broken-cup",
@@ -597,7 +597,7 @@ export const STORIES: Story[] = [
       { q: "ماذا فعل عمر في النهاية؟", options: ["قال الصدق", "اتّهم القطّة", "اختبأ"], answer: 0 },
       { q: "ماذا قالت أمّه؟", options: ["صدقك أغلى من ألف كوب", "أنت معاقب", "لا تلعب أبدًا"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "sick-neighbor",
@@ -621,7 +621,7 @@ export const STORIES: Story[] = [
       { q: "لماذا لم يخرج العمّ صالح؟", options: ["كان مريضًا", "كان مسافرًا", "كان نائمًا"], answer: 0 },
       { q: "ماذا حمل يوسف معه؟", options: ["طبق شوربة", "كرة", "كتابًا"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "window-bird",
@@ -642,7 +642,7 @@ export const STORIES: Story[] = [
       { q: "ماذا وضع آدم للعصفور؟", options: ["ماءً وقمحًا", "حلوى", "لا شيء"], answer: 0 },
       { q: "ماذا صار يحدث كلّ صباح؟", options: ["تزوره العصافير", "يمطر", "ينام متأخرًا"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "garden-team",
@@ -667,7 +667,7 @@ export const STORIES: Story[] = [
       { q: "أين زرع الأطفال البستان؟", options: ["بجوار المسجد", "في المدرسة", "في السوق"], answer: 0 },
       { q: "ما الخُلق الذي تعلّمناه؟", options: ["التعاون", "الكسل", "الأنانية"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "kind-word",
@@ -691,7 +691,7 @@ export const STORIES: Story[] = [
       { q: "ماذا قال يوسف لخالد؟", options: ["قراءتك تتحسّن", "أنت لا تعرف", "لا شيء"], answer: 0 },
       { q: "الكلمة الطيبة…", options: ["صدقة", "لا قيمة لها", "مضيعة للوقت"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "first-fast",
@@ -712,7 +712,7 @@ export const STORIES: Story[] = [
       { q: "على ماذا أفطرت نور؟", options: ["تمرة وماء", "حلوى", "لم تفطر"], answer: 0 },
       { q: "كيف صبرت على الجوع؟", options: ["انشغلت بأعمالٍ مفيدة", "نامت طوال اليوم", "أكلت سرًّا"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "fajr-grandpa",
@@ -733,7 +733,7 @@ export const STORIES: Story[] = [
       { q: "بماذا وعد حمزة جدّه؟", options: ["أن يصلّي معه الفجر", "أن يلعب معه", "أن يسافر معه"], answer: 0 },
       { q: "ماذا شاهدا بعد الصلاة؟", options: ["شروق الشمس", "المطر", "القمر"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "lost-wallet",
@@ -754,7 +754,7 @@ export const STORIES: Story[] = [
       { q: "ماذا فعل زيد بالمحفظة؟", options: ["أعطاها للمعلّم", "أخذ النقود", "رماها"], answer: 0 },
       { q: "بماذا لقّبه المعلّم؟", options: ["الأمين", "السريع", "الذكي"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "parents",
@@ -778,7 +778,7 @@ export const STORIES: Story[] = [
       { q: "ماذا فعل آدم في المفاجأة؟", options: ["جمع الألعاب", "نام", "خرج يلعب"], answer: 0 },
       { q: "ما الخُلق في هذه القصة؟", options: ["برّ الوالدين", "الكذب", "الإسراف"], answer: 0 },
     ],
-    review: "pending",
+    review: "approved",
   },
 ];
 

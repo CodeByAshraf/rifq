@@ -5,9 +5,9 @@
  * - Explanations below are educational text, NOT Quran. They are kept separate from Quranic text.
  * - Quranic examples are REFERENCES ONLY (surah, ayah, word indexes). The words themselves are
  *   always rendered from the verified Quran files at runtime, never typed here.
- * - Every lesson carries `review: "pending"` until approved by a qualified Quran/Tajweed teacher.
- *   The texts were checked against standard Hafs (Shatibiyya) references, and every example is
- *   checked against the verified text by scripts/verify-tajweed.mjs.
+ * - Review: the texts were checked against standard Hafs (Shatibiyya) references and approved by
+ *   the app owner (2026-11-26). Every example is checked against the verified text by
+ *   scripts/verify-tajweed.mjs. Set a lesson back to "pending" to show the "under review" badge.
  */
 
 export type RuleColor = "teal" | "lilac" | "sun" | "coral" | "sky" | "mint";
@@ -75,7 +75,7 @@ export const LESSONS: Lesson[] = [
       { q: "حروف الإظهار تخرج من…", options: ["الشفتين", "الحلق", "الأنف"], answer: 1, why: "حروف الإظهار الستة حروفٌ حلقية." },
       { q: "أيّ الحروف التالية من حروف الإدغام بلا غنّة؟", options: ["الراء", "الياء", "الميم"], answer: 0, why: "الإدغام بلا غنّة يكون في اللام والراء." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "meem",
@@ -97,7 +97,7 @@ export const LESSONS: Lesson[] = [
       { q: "لماذا تُسمّى أحكام الميم الساكنة «شفوية»؟", options: ["لأن الميم تخرج من الشفتين", "لأنها تُقرأ بسرعة", "لأنها في آخر الآية"], answer: 0, why: "مخرج الميم من الشفتين." },
       { q: "ميمٌ ساكنة بعدها باء، ما الحكم؟", options: ["الإظهار الشفوي", "الإخفاء الشفوي", "الإدغام الشفوي"], answer: 1, why: "الباء هي حرف الإخفاء الشفوي." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "madd",
@@ -124,7 +124,7 @@ export const LESSONS: Lesson[] = [
       { q: "حرف المدّ وبعده همزة في نفس الكلمة يُسمّى…", options: ["المدّ المنفصل", "المدّ المتّصل", "المدّ اللازم"], answer: 1, why: "اتصل حرف المدّ والهمز في كلمةٍ واحدة." },
       { q: "كم حركةً يُمدّ المدّ اللازم؟", options: ["حركتان", "أربع", "ست"], answer: 2, why: "المدّ اللازم يُمدّ ست حركات لزومًا." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "qalqalah",
@@ -146,7 +146,7 @@ export const LESSONS: Lesson[] = [
       { q: "ما الكلمة التي تجمع حروف القلقلة؟", options: ["قطب جد", "ينمو", "خص ضغط قظ"], answer: 0, why: "«قطب جد»: ق ط ب ج د." },
       { q: "متى تكون القلقلة كبرى؟", options: ["عند الوقف على حرف القلقلة", "إذا كان الحرف متحرّكًا", "في أوّل الكلمة"], answer: 0, why: "تكون كبرى عند الوقف." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "heavy",
@@ -169,7 +169,7 @@ export const LESSONS: Lesson[] = [
       { q: "أيّ هذه الحروف يُفخّم دائمًا؟", options: ["الصاد", "السين", "الميم"], answer: 0, why: "الصاد من حروف الاستعلاء والإطباق." },
       { q: "تُرقّق لام لفظ الجلالة إذا سبقها…", options: ["فتح", "ضم", "كسر"], answer: 2, why: "مع الكسر تُرقّق." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "lam",
@@ -191,7 +191,7 @@ export const LESSONS: Lesson[] = [
       { q: "في اللام الشمسية…", options: ["تختفي اللام ويُشدّد ما بعدها", "تظهر اللام واضحة", "تُمدّ اللام"], answer: 0, why: "اللام الشمسية تُدغم في الحرف الذي بعدها." },
       { q: "أيّ حرفٍ من الحروف القمرية؟", options: ["القاف", "الشين", "النون"], answer: 0, why: "القاف من حروف «ابغِ حجّك وخف عقيمه»." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "ghunnah",
@@ -213,7 +213,7 @@ export const LESSONS: Lesson[] = [
       { q: "من أين تخرج الغنّة؟", options: ["من الخيشوم", "من الحلق", "من الشفتين"], answer: 0, why: "الخيشوم مخرج الغنّة." },
       { q: "كم حركةً نُطيل الغنّة في النون المشدّدة؟", options: ["حركتين", "ست حركات", "لا نطيلها"], answer: 0, why: "مقدار الغنّة حركتان." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "ra",
@@ -235,7 +235,7 @@ export const LESSONS: Lesson[] = [
       { q: "الراء المفتوحة تكون…", options: ["مفخّمة", "مرقّقة", "ساكنة"], answer: 0, why: "الراء المفتوحة تُفخَّم." },
       { q: "الراء المكسورة تكون…", options: ["مرقّقة", "مفخّمة", "مقلقلة"], answer: 0, why: "الكسر يرقّق الراء." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "madd2",
@@ -258,7 +258,7 @@ export const LESSONS: Lesson[] = [
       { q: "عند الوقف على تنوين الفتح نقرؤه…", options: ["ألفًا ممدودة حركتين", "نونًا", "نحذفه"], answer: 0, why: "هذا مدّ العِوَض." },
       { q: "في مدّ البدل تأتي الهمزة…", options: ["قبل حرف المدّ", "بعد حرف المدّ", "في آخر الآية فقط"], answer: 0, why: "يتقدّم الهمز على حرف المدّ." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "idgham2",
@@ -281,7 +281,7 @@ export const LESSONS: Lesson[] = [
       { q: "باءٌ ساكنة بعدها باء، هذا…", options: ["متماثلان", "متجانسان", "متقاربان"], answer: 0, why: "الحرفان متطابقان." },
       { q: "اللام الساكنة مع الراء من…", options: ["المتقاربين", "المتماثلين", "الإظهار"], answer: 0, why: "مخرجاهما متقاربان." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "waqf",
@@ -309,7 +309,7 @@ export const LESSONS: Lesson[] = [
       { q: "علامة «صلى» تعني…", options: ["الوصل أولى", "الوقف أولى", "الوقف لازم"], answer: 0, why: "«صلى» تعني أنّ الوصل أفضل." },
       { q: "في وقف المعانقة…", options: ["نقف عند أحد الموضعين فقط", "نقف عندهما معًا", "لا نقف أبدًا"], answer: 0, why: "لا يُجمع بين الوقفين." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "makharij",
@@ -330,7 +330,7 @@ export const LESSONS: Lesson[] = [
       { q: "كم حرفًا يخرج من الحلق؟", options: ["ثلاثة", "ستة", "ثمانية عشر"], answer: 1, why: "ء هـ ع ح غ خ." },
       { q: "الغنّة تخرج من…", options: ["الخيشوم", "اللسان", "الجوف"], answer: 0, why: "الخيشوم مخرج الغنة." },
     ],
-    review: "pending",
+    review: "approved",
   },
   {
     id: "sifat",
@@ -349,7 +349,7 @@ export const LESSONS: Lesson[] = [
       { q: "«أجد قط بكت» تجمع حروف…", options: ["الهمس", "الشدّة", "الاستعلاء"], answer: 1, why: "هي حروف الشدّة الثمانية." },
       { q: "ما ضدّ صفة الاستعلاء؟", options: ["الاستفال", "الهمس", "القلقلة"], answer: 0, why: "الاستفال انخفاض اللسان." },
     ],
-    review: "pending",
+    review: "approved",
   },
 ];
 
