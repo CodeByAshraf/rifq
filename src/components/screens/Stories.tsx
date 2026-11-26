@@ -167,7 +167,7 @@ function StoryReader({ story, onExit, onOpen }: { story: Story; onExit: () => vo
               {listening ? "⏸ إيقاف مؤقّت" : narrator.state === "paused" ? "▶ أكمل الاستماع" : "🎧 استمع للقصة"}
             </Button>
           </div>
-          {narrator.state === "error" && <p className="mt-2 text-sm font-bold text-coral-500">صوت هذه القصة غير متاح الآن. تأكّد من الاتصال بالإنترنت.</p>}
+          {narrator.state === "error" && <p className="mt-2 text-sm font-bold text-coral-500">تعذّر تشغيل الصوت. جهّز الصوت العربي مرة واحدة من «حكايات قبل النوم».</p>}
 
           <AnimatePresence mode="wait">
             <motion.div key={page} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.25 }} className="mt-5 min-h-40">

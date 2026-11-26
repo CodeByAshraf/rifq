@@ -49,6 +49,12 @@ const PERMS = [
 patch("mobile/android/app/src/main/AndroidManifest.xml", (s) => {
   for (const perm of PERMS)
     if (!s.includes(`"${perm}"`)) s = s.replace("</manifest>", `    <uses-permission android:name="${perm}" />\n</manifest>`);
+  // Story narration: Google's speech engine must be visible to the app (Android 11+).
+  if (!s.includes("com.google.android.tts"))
+    s = s.replace(
+      "</manifest>",
+      `    <queries>\n        <package android:name="com.google.android.tts" />\n        <intent>\n            <action android:name="android.intent.action.TTS_SERVICE" />\n        </intent>\n    </queries>\n</manifest>`,
+    );
   // Older projects asked for approximate location: remove it.
   s = s.replace(/\s*<uses-permission android:name="android\.permission\.ACCESS_(COARSE|FINE)_LOCATION" \/>/g, "");
   // Child data must not go to cloud backup or device transfer.

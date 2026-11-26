@@ -1,13 +1,13 @@
 /**
  * Plays a story's narration.
  * - The retelling: a recorded voice file if one was published (release "story-audio"), otherwise
- *   the phone's own text-to-speech voice (free, offline). Recorded files win automatically as
+ *   the phone's own text-to-speech voice (free, offline; src/lib/voice.ts). Recorded files win automatically as
  *   soon as they exist.
  * - Quran verses: always human recitation from EveryAyah. Never text-to-speech.
  * Nothing is uploaded or tracked.
  */
 import { useEffect, useRef, useState } from "react";
-import { TextToSpeech } from "@capacitor-community/text-to-speech";
+import { speak as speakText, stopVoice } from "@/lib/voice";
 import { audioUrl, RECITERS } from "@/lib/quran";
 import type { Clip } from "@/lib/story-clips";
 
@@ -17,20 +17,6 @@ const STORY_AUDIO_BASE = "https://github.com/CodeByAshraf/rifq/releases/download
 let recordedMissing = false;
 
 export type NarratorState = "idle" | "loading" | "playing" | "paused" | "error";
-
-/** Is an Arabic voice installed on this phone? (null = unknown) */
-export async function arabicVoiceReady(): Promise<boolean | null> {
-  try {
-    return (await TextToSpeech.isLanguageSupported({ lang: "ar" })).supported;
-  } catch {
-    return null;
-  }
-}
-
-/** Opens the system screen to install a voice (Android). */
-export const installVoice = () => TextToSpeech.openInstall().catch(() => {});
-
-const stopVoice = () => TextToSpeech.stop().catch(() => {});
 
 /**
  * A queue player. `onClip` reports each clip as it starts (to turn pages), `onEnd` when the
@@ -82,7 +68,7 @@ export function useNarrator(opts: { onClip?: (c: Clip, i: number) => void; onEnd
       const mine = ++run;
       viaVoice = true;
       setState("playing");
-      TextToSpeech.speak({ text: c.text, lang: "ar", rate: 0.85, pitch: 1.05, category: "playback" })
+      speakText(c.text)
         .then(() => {
           if (run === mine) playAt(i + 1);
         })

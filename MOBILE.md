@@ -143,8 +143,9 @@ testing first.
 
 ## Story narration («حكايات قبل النوم»)
 
-- The retelling is read by the phone's own text-to-speech voice (@capacitor-community/text-to-speech,
-  free, offline). If recorded files are published (below), they are played instead, automatically.
+- The retelling is read by the phone's own text-to-speech voice, free and offline: on Android the
+  app plugin `RifqVoicePlugin.java` (Google's engine and best Arabic voice when installed), on iOS
+  the Web Speech API. «حكايات قبل النوم» guides the parent to install the Arabic voice once. If recorded files are published (below), they are played instead, automatically.
 - Optional recorded voice: an AI voice (ElevenLabs) or human recordings named like the clips. Quran verses inside a story are
   never synthesized: they play from EveryAyah (Mahmoud Khalil Al-Husary).
 - Recording: Actions → **story-audio** → Run workflow. It needs the secret `ELEVENLABS_API_KEY` and the

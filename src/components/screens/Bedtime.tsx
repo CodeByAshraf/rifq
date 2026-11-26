@@ -3,7 +3,8 @@ import { IconHeadphones, IconPause, IconPlay, IconSparkle } from "@/components/a
 import { AppShell } from "@/components/shell/AppShell";
 import { STORIES, storyOfTheDay, type Story } from "@/data/stories";
 import { surahMeta, toArabicDigits } from "@/lib/quran";
-import { arabicVoiceReady, installVoice, useNarrator } from "@/lib/story-audio";
+import { useNarrator } from "@/lib/story-audio";
+import { installVoice, isAndroid, voiceSettings, voiceStatus, type VoiceStatus } from "@/lib/voice";
 import { lineClip, storyPlan, type Clip } from "@/lib/story-clips";
 
 /** Sleep timer: a number of stories, or minutes (then the voice fades out). */
@@ -58,9 +59,23 @@ export function Bedtime() {
   const active = narrator.state !== "idle" && narrator.state !== "error";
 
   useEffect(() => () => void (stopAt.current && clearTimeout(stopAt.current)), []);
-  // The phone voice needs an Arabic voice installed (Android: Google Speech Services).
-  const [voiceOk, setVoiceOk] = useState<boolean | null>(null);
-  useEffect(() => void arabicVoiceReady().then(setVoiceOk), []);
+  // The phone voice needs an Arabic voice (Android: Google's speech engine + its Arabic voice).
+  // Checked again when the user comes back from installing it.
+  const [voice, setVoice] = useState<VoiceStatus | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const check = (fresh: boolean) =>
+      voiceStatus(fresh)
+        .then((v) => alive && setVoice(v))
+        .catch(() => {});
+    void check(false);
+    const back = () => document.visibilityState === "visible" && void check(true);
+    document.addEventListener("visibilitychange", back);
+    return () => {
+      alive = false;
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, []);
 
   const begin = () => {
     const t = TIMERS.find((x) => x.id === timer)!;
@@ -150,16 +165,9 @@ export function Bedtime() {
               >
                 <IconHeadphones size={28} /> ابدأ الحكاية
               </button>
-              {voiceOk === false && (
-                <div className="mt-3 rounded-2xl bg-white/10 p-4 text-center text-sm">
-                  <p className="font-bold">ليحكي الهاتف القصص يحتاج إلى «الصوت العربي».</p>
-                  <button onClick={installVoice} className="mt-2 rounded-xl bg-white px-4 py-2 font-bold text-[#13224a]">
-                    تنزيل الصوت العربي
-                  </button>
-                </div>
-              )}
+              {voice && !voice.arabic && <VoiceSetup v={voice} />}
               {narrator.state === "error" && (
-                <p className="mt-3 text-center text-sm font-bold text-coral-400">تعذّر التشغيل الآن. تأكّد من الاتصال بالإنترنت (للآيات) ومن وجود الصوت العربي في الهاتف.</p>
+                <p className="mt-3 text-center text-sm font-bold text-coral-400">تعذّر التشغيل الآن. تأكّد من الاتصال بالإنترنت (للآيات) ومن تجهيز الصوت العربي.</p>
               )}
               <p className="mt-6 flex items-start gap-2 text-sm text-white/55">
                 <IconSparkle size={16} className="mt-0.5 shrink-0" />
@@ -170,6 +178,36 @@ export function Bedtime() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+/** Guides the parent to get an Arabic voice on the phone (one time). */
+function VoiceSetup({ v }: { v: VoiceStatus }) {
+  const btn = "mt-3 w-full rounded-xl bg-white px-4 py-3 font-bold text-[#13224a]";
+  return (
+    <div className="mt-4 rounded-2xl bg-white/10 p-4 text-sm leading-relaxed">
+      <p className="font-display text-base font-extrabold text-sun-300">تجهيز صوت الحكايات (مرة واحدة)</p>
+      {!isAndroid ? (
+        <p className="mt-1 text-white/80">لا يوجد صوتٌ عربي على هذا الجهاز. أضِفه من إعدادات الجهاز: تسهيلات الاستخدام ← المحتوى المنطوق ← الأصوات ← العربية.</p>
+      ) : !v.google ? (
+        <>
+          <p className="mt-1 text-white/80">ثبّت تطبيق «خدمات الكلام من Google» المجاني من متجر Play، ثم ارجع إلى هنا.</p>
+          <button onClick={installVoice} className={btn}>
+            فتح متجر Play
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="mt-1 text-white/80">نزّل «العربية» من قائمة اللغات في «خدمات الكلام من Google»، ثم ارجع إلى هنا.</p>
+          <button onClick={installVoice} className={btn}>
+            تنزيل الصوت العربي
+          </button>
+          <button onClick={voiceSettings} className="mt-2 w-full text-center text-xs font-bold text-white/60 underline">
+            أو افتح إعدادات تحويل النص إلى كلام
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
