@@ -1,4 +1,5 @@
-# Temporary: checks how the recitation audio hosts answer (redirects, content type, CORS).
+# Temporary: plays an ayah in the real built app (headless Chromium, real network) and
+# reports what the audio element did.
 name: diag
 on:
   push:
@@ -9,16 +10,45 @@ jobs:
   audio:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: node scripts/build-app.mjs
+      - run: pip install playwright==1.49.1 && python -m playwright install --with-deps chromium
       - run: |
-          for u in \
-            "https://everyayah.com/data/Alafasy_128kbps/001001.mp3" \
-            "https://everyayah.com/data/Husary_128kbps/002255.mp3" \
-            "https://verses.quran.com/Alafasy/mp3/001001.mp3" \
-            "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3" ; do
-            echo "=== $u" >> out.txt
-            curl -sIL -m 30 -H "Origin: https://localhost" -H "Range: bytes=0-1" "$u" | grep -iE "^(HTTP|location|content-type|access-control-allow-origin|accept-ranges|content-range|server)" >> out.txt || echo "curl failed" >> out.txt
-          done
-          cat out.txt
+          (cd mobile/www && python -m http.server 3400 >/dev/null 2>&1 &)
+          sleep 2
+          cat > t.py <<'PY'
+          import asyncio
+          from playwright.async_api import async_playwright
+          async def main():
+              out=[]
+              async with async_playwright() as p:
+                  b=await p.chromium.launch(args=["--autoplay-policy=user-gesture-required"])
+                  ctx=await b.new_context(viewport={"width":390,"height":844})
+                  await ctx.add_init_script("""
+                    localStorage.setItem('rifq.intro.seen','1');
+                    localStorage.setItem('rifq.mushaf.v1', JSON.stringify({last: 1, mark: null}));
+                    window.__ev=[];
+                    const op=HTMLMediaElement.prototype.play;
+                    HTMLMediaElement.prototype.play=function(){ const el=this; window.__ev.push('play '+el.src);
+                      ['playing','error','ended','stalled'].forEach(k=>el.addEventListener(k,()=>window.__ev.push(k+' '+(el.error?el.error.code:'')+' t='+el.currentTime.toFixed(2)),{once:true}));
+                      return op.call(this).then(r=>{window.__ev.push('play-ok');return r},e=>{window.__ev.push('play-rejected '+e.name);throw e}); };
+                  """)
+                  page=await ctx.new_page()
+                  page.on("console", lambda m: out.append("console "+m.type+": "+m.text))
+                  page.on("requestfailed", lambda r: out.append("failed "+r.url+" "+(r.failure or "")))
+                  await page.goto("http://localhost:3400/index.html#mushaf"); await page.wait_for_timeout(3500)
+                  await page.locator('.whitespace-nowrap span[data-k="1:2"]').first.click(); await page.wait_for_timeout(600)
+                  await page.click("text=استمع للآية"); await page.wait_for_timeout(6000)
+                  out.append("events: "+str(await page.evaluate("window.__ev")))
+                  out.append("sheet: "+(await page.inner_text("[role=dialog]"))[:200].replace("\\n"," | "))
+                  await b.close()
+              open("out.txt","w").write("\\n".join(out)); print("\\n".join(out))
+          asyncio.run(main())
+          PY
+          python t.py
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: diag-${{ github.run_number }}
