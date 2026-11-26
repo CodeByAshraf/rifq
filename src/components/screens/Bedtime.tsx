@@ -4,7 +4,8 @@ import { AppShell } from "@/components/shell/AppShell";
 import { STORIES, storyOfTheDay, type Story } from "@/data/stories";
 import { surahMeta, toArabicDigits } from "@/lib/quran";
 import { useNarrator } from "@/lib/story-audio";
-import { installVoice, isAndroid, voiceSettings, voiceStatus, type VoiceStatus } from "@/lib/voice";
+import { installVoice, isAndroid, speak, stopVoice, voiceSettings, voiceStatus, type VoiceStatus } from "@/lib/voice";
+import { ALLAH_FORMS, ALLAH_SAMPLE, allahForm, setAllahForm, type AllahForm } from "@/lib/allah-spelling";
 import { lineClip, storyPlan, type Clip } from "@/lib/story-clips";
 
 /** Sleep timer: a number of stories, or minutes (then the voice fades out). */
@@ -166,6 +167,7 @@ export function Bedtime() {
                 <IconHeadphones size={28} /> ابدأ الحكاية
               </button>
               {voice && !voice.arabic && <VoiceSetup v={voice} />}
+              {voice?.arabic && <AllahPicker />}
               {narrator.state === "error" && (
                 <p className="mt-3 text-center text-sm font-bold text-coral-400">تعذّر التشغيل الآن. تأكّد من الاتصال بالإنترنت (للآيات) ومن تجهيز الصوت العربي.</p>
               )}
@@ -178,6 +180,43 @@ export function Bedtime() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+/**
+ * Phone voices differ in how they say the name of Allah. The parent listens to each spelling
+ * and keeps the one that sounds right; it is saved on the device.
+ */
+function AllahPicker() {
+  const [form, setForm] = useState<AllahForm>(() => allahForm());
+  const [open, setOpen] = useState(false);
+  const pick = (f: AllahForm) => {
+    setAllahForm(f);
+    setForm(f);
+    void stopVoice().then(() => speak(ALLAH_SAMPLE).catch(() => {}));
+  };
+  if (!open)
+    return (
+      <button onClick={() => setOpen(true)} className="mt-4 w-full text-center text-sm font-bold text-white/60 underline">
+        ضبط نطق لفظ الجلالة
+      </button>
+    );
+  return (
+    <div className="mt-4 rounded-2xl bg-white/10 p-4 text-sm">
+      <p className="font-display text-base font-extrabold text-sun-300">أيّ نطقٍ صحيح على هاتفك؟</p>
+      <p className="mt-1 text-white/75">اضغط كل رقم واستمع، ثم اترك المختار على النطق الصحيح.</p>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {ALLAH_FORMS.map((f) => (
+          <button
+            key={f.id}
+            onClick={() => pick(f.id)}
+            className={`rounded-xl py-3 font-display text-xl font-extrabold ${form === f.id ? "bg-sun-300 text-ink-900" : "bg-white/15 text-white"}`}
+          >
+            {f.label} ▶
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

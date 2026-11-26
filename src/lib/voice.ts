@@ -5,6 +5,7 @@
  * - iOS / browser: the Web Speech API (speechSynthesis), with an Arabic system voice.
  */
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import { spellAllah } from "@/lib/allah-spelling";
 
 export interface VoiceStatus {
   /** The speech engine works. */
@@ -49,7 +50,8 @@ export async function voiceStatus(fresh = false): Promise<VoiceStatus> {
   return { engineReady: Boolean(synth()), google: false, arabic: Boolean(v) };
 }
 
-export async function speak(text: string, rate = 0.85, pitch = 1.05): Promise<void> {
+export async function speak(raw: string, rate = 0.85, pitch = 1.05): Promise<void> {
+  const text = spellAllah(raw);
   if (android) return Native.speak({ text, rate, pitch });
   const s = synth();
   const v = await webArabicVoice();

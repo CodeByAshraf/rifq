@@ -8,7 +8,7 @@ import { join } from "node:path";
 const dir = mkdtempSync(join(tmpdir(), "rifq-test-"));
 const out = join(dir, "bundle.mjs");
 await build({
-  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts"; export { mergeIntoState } from "./src/lib/sync-merge.ts"; export { STORIES } from "./src/data/stories.ts"; export { storyPlan, narrationTexts, lineTexts } from "./src/lib/story-clips.ts";', resolveDir: process.cwd(), loader: "ts" },
+  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts"; export { mergeIntoState } from "./src/lib/sync-merge.ts"; export { spellAllah } from "./src/lib/allah-spelling.ts"; export { STORIES } from "./src/data/stories.ts"; export { storyPlan, narrationTexts, lineTexts } from "./src/lib/story-clips.ts";', resolveDir: process.cwd(), loader: "ts" },
   bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent",
 });
 const V = await import(out);
@@ -127,6 +127,10 @@ t("story narration: every clip the app plays is one the script records; verses a
     assert.equal(bare(c.text), bare(c.plain), `${c.file}: vocalized text differs from the story`);
     if (/الله/.test(c.plain)) assert.ok(/لل[\u064E\u064F\u0650]?\u0651[\u064E\u064F\u0650]?ه/.test(c.text), `${c.file}: the name of Allah needs its shadda`);
   }
+  // Spelling the name of Allah for the voice touches only the name.
+  assert.equal(V.spellAllah("بِسْمِ اللَّهِ وَالْحَمْدُ لِلَّهِ كُلَّهُ", "alif"), "بِسْمِ اللَّاهِ وَالْحَمْدُ لِلَّاهِ كُلَّهُ");
+  assert.equal(V.spellAllah("فَاللَّهُ", "dagger"), "فَاللَّٰهُ");
+  assert.equal(V.spellAllah("الَّذِينَ اللَّيْلَةِ", "alif"), "الَّذِينَ اللَّيْلَةِ");
   for (const c of V.STORIES.flatMap((s) => V.narrationTexts(s))) assert.ok(!/[\u06D6-\u06ED\u08F0-\u08F2\u0671]/.test(c.text), c.file);
 });
 t("pull merges the account into the device without losing local data", () => {
