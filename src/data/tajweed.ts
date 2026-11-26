@@ -6,6 +6,8 @@
  * - Quranic examples are REFERENCES ONLY (surah, ayah, word indexes). The words themselves are
  *   always rendered from the verified Quran files at runtime, never typed here.
  * - Every lesson carries `review: "pending"` until approved by a qualified Quran/Tajweed teacher.
+ *   The texts were checked against standard Hafs (Shatibiyya) references, and every example is
+ *   checked against the verified text by scripts/verify-tajweed.mjs.
  */
 
 export type RuleColor = "teal" | "lilac" | "sun" | "coral" | "sky" | "mint";
@@ -55,9 +57,9 @@ export const LESSONS: Lesson[] = [
     intro: "النون الساكنة هي نونٌ بلا حركة، والتنوين نونٌ نسمعها ولا نكتبها في آخر الكلمة. ننظر إلى الحرف الذي بعدها لنعرف كيف ننطقها.",
     rules: [
       { id: "izhar", name: "الإظهار", color: "sky", letters: "ء هـ ع ح غ خ", kids: "ننطق النون واضحةً تمامًا، لأن الحرف بعدها من الحلق." },
-      { id: "idgham_ghunnah", name: "الإدغام بغنّة", color: "mint", letters: "ي ن م و", kids: "تدخل النون في الحرف الذي بعدها مع صوتٍ لطيفٍ من الأنف." },
+      { id: "idgham_ghunnah", name: "الإدغام بغنّة", color: "mint", letters: "ي ن م و", kids: "تدخل النون في الحرف الذي بعدها مع صوتٍ لطيفٍ من الأنف. يكون ذلك بين كلمتين فقط، أمّا في كلمةٍ واحدة مثل «الدُّنيا» فتظهر النون." },
       { id: "idgham_no_ghunnah", name: "الإدغام بلا غنّة", color: "lilac", letters: "ل ر", kids: "تختفي النون تمامًا في اللام أو الراء بلا صوتٍ من الأنف." },
-      { id: "iqlab", name: "الإقلاب", color: "coral", letters: "ب", kids: "إذا جاءت الباء تتحوّل النون إلى ميمٍ خفيفة مع غنّة." },
+      { id: "iqlab", name: "الإقلاب", color: "coral", letters: "ب", kids: "إذا جاءت الباء تُقلب النون ميمًا مُخفاة مع غنّة، وفي المصحف ميمٌ صغيرة فوقها." },
       { id: "ikhfa", name: "الإخفاء", color: "sun", letters: "باقي الحروف الخمسة عشر", kids: "ننطق النون بين الوضوح والاختفاء مع غنّة." },
     ],
     examples: [
@@ -104,11 +106,11 @@ export const LESSONS: Lesson[] = [
     tone: "sun",
     intro: "حروف المدّ ثلاثة: الألف الساكنة بعد فتح، والواو الساكنة بعد ضم، والياء الساكنة بعد كسر. نقيس طول المدّ بالحركات.",
     rules: [
-      { id: "madd_tabii", name: "المدّ الطبيعي", color: "sky", kids: "مدٌّ قصير بمقدار حركتين، مثل قبضتين صغيرتين." },
-      { id: "madd_muttasil", name: "المدّ المتّصل", color: "coral", kids: "حرف المدّ وبعده همزة في نفس الكلمة، فنمدّ أطول." },
-      { id: "madd_munfasil", name: "المدّ المنفصل", color: "lilac", kids: "حرف المدّ في آخر كلمة، والهمزة في أوّل الكلمة التي بعدها." },
+      { id: "madd_tabii", name: "المدّ الطبيعي", color: "sky", kids: "مدٌّ قصير بمقدار حركتين، كأننا نثني إصبعين بهدوء." },
+      { id: "madd_muttasil", name: "المدّ المتّصل", color: "coral", kids: "حرف المدّ وبعده همزة في نفس الكلمة. مدّه واجب: أربع أو خمس حركات." },
+      { id: "madd_munfasil", name: "المدّ المنفصل", color: "lilac", kids: "حرف المدّ في آخر كلمة، والهمزة في أوّل الكلمة التي بعدها. نمدّه أربع أو خمس حركات." },
       { id: "madd_lazim", name: "المدّ اللازم", color: "teal", kids: "حرف المدّ وبعده حرفٌ مشدّد أو ساكن دائمًا، فنمدّه ستّ حركات." },
-      { id: "madd_arid", name: "المدّ العارض للسكون", color: "mint", kids: "عندما نقف على آخر الكلمة يصير الحرف الأخير ساكنًا فنستطيع أن نمدّ." },
+      { id: "madd_arid", name: "المدّ العارض للسكون", color: "mint", kids: "عندما نقف على آخر الكلمة وقبلها حرف مدّ، يصير الحرف الأخير ساكنًا، فنمدّ حركتين أو أربعًا أو ستًّا." },
     ],
     examples: [
       { surah: 1, ayah: 4, words: [0], ruleId: "madd_tabii" },
@@ -132,7 +134,7 @@ export const LESSONS: Lesson[] = [
     intro: "القلقلة اضطرابٌ في المخرج عند النطق بالحرف ساكنًا حتى يُسمع له نبرةٌ قوية. حروفها خمسة يجمعها قولنا: «قطب جد».",
     rules: [
       { id: "qalqalah_sughra", name: "القلقلة الصغرى", color: "sky", letters: "ق ط ب ج د", kids: "حرف القلقلة ساكن في وسط الكلمة أو الكلام: ارتدادٌ خفيف." },
-      { id: "qalqalah_kubra", name: "القلقلة الكبرى", color: "coral", letters: "ق ط ب ج د", kids: "حرف القلقلة في آخر الآية عندما نقف عليه: ارتدادٌ أوضح." },
+      { id: "qalqalah_kubra", name: "القلقلة الكبرى", color: "coral", letters: "ق ط ب ج د", kids: "حرف القلقلة في آخر الكلمة عندما نقف عليه، وأكثر ذلك في آخر الآية: ارتدادٌ أوضح." },
     ],
     examples: [
       { surah: 112, ayah: 3, words: [1], ruleId: "qalqalah_sughra" },
@@ -220,8 +222,8 @@ export const LESSONS: Lesson[] = [
     tone: "coral",
     intro: "الراء حرفٌ يُفخَّم أحيانًا ويُرقَّق أحيانًا، ونعرف ذلك من حركتها أو من حركة ما قبلها.",
     rules: [
-      { id: "ra_heavy", name: "الراء المفخّمة", color: "coral", kids: "إذا كانت الراء مفتوحةً أو مضمومة نقرؤها ثقيلةً ممتلئة." },
-      { id: "ra_light", name: "الراء المرقّقة", color: "sky", kids: "إذا كانت الراء مكسورة، أو ساكنةً قبلها كسر، نقرؤها خفيفة." },
+      { id: "ra_heavy", name: "الراء المفخّمة", color: "coral", kids: "إذا كانت الراء مفتوحةً أو مضمومة، أو ساكنةً قبلها فتحٌ أو ضمّ، نقرؤها ثقيلةً ممتلئة." },
+      { id: "ra_light", name: "الراء المرقّقة", color: "sky", kids: "إذا كانت الراء مكسورة، أو ساكنةً قبلها كسرٌ أصليّ وليس بعدها حرف استعلاء في الكلمة نفسها، نقرؤها خفيفة." },
     ],
     examples: [
       { surah: 114, ayah: 1, words: [2], ruleId: "ra_heavy" },
@@ -244,7 +246,7 @@ export const LESSONS: Lesson[] = [
     rules: [
       { id: "madd_badal", name: "مدّ البدل", color: "lilac", kids: "همزةٌ يأتي بعدها حرف مدّ، مثل «ءا»، فنمدّ حركتين." },
       { id: "madd_iwad", name: "مدّ العِوَض", color: "sun", kids: "عندما نقف على تنوين الفتح نقلبه ألفًا ونمدّ حركتين." },
-      { id: "madd_leen", name: "مدّ اللين", color: "teal", kids: "واوٌ أو ياءٌ ساكنة قبلها فتح، ونقف بعدها، فنمدّ مدًّا ليّنًا." },
+      { id: "madd_leen", name: "مدّ اللين", color: "teal", kids: "واوٌ أو ياءٌ ساكنة قبلها فتح، ونقف على الحرف الذي بعدها، فنمدّ مدًّا ليّنًا: حركتين أو أربعًا أو ستًّا." },
     ],
     examples: [
       { surah: 103, ayah: 3, words: [2], ruleId: "madd_badal" },
@@ -289,7 +291,7 @@ export const LESSONS: Lesson[] = [
     intro: "في المصحف علاماتٌ صغيرة فوق الكلمات، تخبرنا هل نقف أو نصل، حتى يبقى المعنى صحيحًا وواضحًا.",
     rules: [
       { id: "waqf_lazim", name: "الوقف اللازم", color: "coral", letters: "م", kids: "علامة «م»: يجب أن نقف هنا." },
-      { id: "waqf_la", name: "الوقف الممنوع", color: "lilac", letters: "لا", kids: "علامة «لا»: لا نقف هنا." },
+      { id: "waqf_la", name: "الوقف الممنوع", color: "lilac", letters: "لا", kids: "علامة «لا»: لا نقف هنا، إلا إذا كانت على رأس آية." },
       { id: "waqf_jaiz", name: "الوقف الجائز", color: "mint", letters: "ج", kids: "علامة «ج»: نقف أو نصل، الأمران سواء." },
       { id: "waqf_sila", name: "الوصل أولى", color: "sky", letters: "صلى", kids: "علامة «صلى»: الأفضل أن نصل." },
       { id: "waqf_qila", name: "الوقف أولى", color: "sun", letters: "قلى", kids: "علامة «قلى»: الأفضل أن نقف." },

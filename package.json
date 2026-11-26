@@ -16,7 +16,7 @@
     "test:rls": "node scripts/test-rls.mjs",
     "build:adhkar": "node scripts/build-adhkar.mjs",
     "verify:adhkar": "node scripts/verify-adhkar.mjs",
-    "verify:content": "node scripts/verify-quran.mjs && node scripts/verify-adhkar.mjs && node scripts/build-mushaf.mjs --verify",
+    "verify:content": "node scripts/verify-quran.mjs && node scripts/verify-adhkar.mjs && node scripts/build-mushaf.mjs --verify && node scripts/verify-tajweed.mjs",
     "app:sync": "npm run build && npx cap sync && node scripts/native-config.mjs",
     "app:icons": "node scripts/app-icons.mjs && npx capacitor-assets generate --assetPath mobile/assets --android --ios --iosProject mobile/ios/App --androidProject mobile/android",
     "app:configure": "node scripts/native-config.mjs",
@@ -26,7 +26,8 @@
     "app:sound": "node --no-warnings scripts/fajr-sound.mjs",
     "build:legal": "node scripts/build-legal.mjs",
     "build:mushaf": "node scripts/build-mushaf.mjs",
-    "verify:mushaf": "node scripts/build-mushaf.mjs --verify"
+    "verify:mushaf": "node scripts/build-mushaf.mjs --verify",
+    "verify:tajweed": "node scripts/verify-tajweed.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
