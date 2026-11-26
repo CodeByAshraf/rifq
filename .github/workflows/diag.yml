@@ -15,6 +15,8 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: node scripts/build-app.mjs
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
       - run: pip install playwright==1.49.1 && python -m playwright install --with-deps chromium
       - run: |
           (cd mobile/www && python -m http.server 3400 >/dev/null 2>&1 &)
@@ -48,8 +50,9 @@ jobs:
               open("out.txt","w").write("\\n".join(out)); print("\\n".join(out))
           asyncio.run(main())
           PY
-          python t.py
+          python t.py || echo "script failed" >> out.txt
       - uses: softprops/action-gh-release@v2
+        if: always()
         with:
           tag_name: diag-${{ github.run_number }}
           name: diag
