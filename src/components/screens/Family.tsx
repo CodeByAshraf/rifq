@@ -89,7 +89,6 @@ export function Family() {
             <Button
               onClick={() => {
                 actions.setActiveChild(child.id);
-                actions.setMode("kids");
                 router.push("/kids");
               }}
             >

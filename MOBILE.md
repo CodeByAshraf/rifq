@@ -109,7 +109,7 @@ testing first.
 - In Xcode, set your Team.
 - Product → Archive → Distribute → App Store Connect, then submit through TestFlight.
 - Privacy labels must match `PrivacyInfo.xcprivacy`: email, name and user content, linked to the user, for app functionality, no tracking.
-- For the Kids category, set the age band. The app has no third-party analytics and no external links, and the account and parent area require sign-in, which acts as the parental gate.
+- For the Kids category, set the age band. The app has no third-party analytics and no external links. Account, settings and sharing are in the parents' corner, behind a parental gate.
 - Export compliance: `ITSAppUsesNonExemptEncryption = false` is already set.
 
 ## Fajr alarm (`/fajr`, `/fajr-wake`)
@@ -121,8 +121,8 @@ testing first.
   - The plan is renewed every time the app opens. Solving the challenge cancels the rest of the burst.
 - **"Still awake?" check:** comes 5 minutes after solving; if it is not answered within 2 minutes, the alarm rings again.
 - **Challenges:**
-  - Kids: order the waking dua, using its exact text from `adhkar.json`; count; colour sequence.
-  - Adults: arithmetic; memory grid; photo of the wudu place. The photo is matched on the device against a stored fingerprint. After 3 failed attempts it switches to arithmetic.
+  - Order the waking dua (its exact text from `adhkar.json`), count, or repeat a colour sequence.
+  - Parents choose the city, time and challenges in the parents' corner; the wake-up screen itself is never gated.
 - **Limits of this version:**
   - Notifications follow the phone's silent and Do Not Disturb settings.
   - The app cannot show a full-screen alarm over the lock screen.
@@ -130,7 +130,7 @@ testing first.
 - **Google Play:**
   - `SCHEDULE_EXACT_ALARM` comes from the notifications plugin. On Android 14+ the user grants "Alarms & reminders"; the screen has a button for it.
   - Approximate location is processed on the device only, so in Data safety it is "not collected".
-- **App Store:** the camera and location usage texts are set by `npm run app:configure`.
+- **App Store:** the microphone and location usage texts are set by `npm run app:configure`. The camera is not used.
 
 ## Native behaviour
 

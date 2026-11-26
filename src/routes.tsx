@@ -1,7 +1,7 @@
 // Every screen of the app, by path (hash routing).
 import type { ReactElement } from "react";
+import { useProgress } from "@/lib/store";
 import { Adhkar } from "@/components/screens/Adhkar";
-import { AdultDashboard } from "@/components/screens/AdultDashboard";
 import { AppSettings } from "@/components/screens/AppSettings";
 import { Certificates } from "@/components/screens/Certificates";
 import { Challenges } from "@/components/screens/Challenges";
@@ -12,9 +12,9 @@ import { Family } from "@/components/screens/Family";
 import { Games } from "@/components/screens/Games";
 import { JourneyMap } from "@/components/screens/JourneyMap";
 import { KidsDashboard } from "@/components/screens/KidsDashboard";
-import { Landing } from "@/components/screens/Landing";
 import { Login } from "@/components/screens/Login";
 import { Magdy } from "@/components/screens/Magdy";
+import { Parents } from "@/components/screens/Parents";
 import { Memorize } from "@/components/screens/Memorize";
 import { More } from "@/components/screens/More";
 import { Privacy } from "@/components/screens/Privacy";
@@ -26,8 +26,14 @@ import { Stories } from "@/components/screens/Stories";
 import { Tajweed } from "@/components/screens/Tajweed";
 import { Welcome } from "@/components/screens/Welcome";
 
+/** Home: the child's world, or Baba Magdy's welcome tour the first time. */
+function Home() {
+  const onboarded = useProgress((s) => Boolean(s.onboarding));
+  return onboarded ? <KidsDashboard /> : <Welcome />;
+}
+
 export const ROUTES: Record<string, () => ReactElement> = {
-  "/": Landing,
+  "/": Home,
   "/kids": KidsDashboard,
   "/journey": JourneyMap,
   "/quran": QuranReader,
@@ -36,7 +42,7 @@ export const ROUTES: Record<string, () => ReactElement> = {
   "/play": Games,
   "/stories": Stories,
   "/revision": Revision,
-  "/adult": AdultDashboard,
+  "/parents": Parents,
   "/family": Family,
   "/login": Login,
   "/welcome": Welcome,

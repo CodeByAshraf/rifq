@@ -9,7 +9,7 @@ import { Button, Card, Celebrate, Chip, SampleNotice } from "@/components/ui";
 import { LESSONS, RULE_STYLES, ruleById, type Example, type Lesson } from "@/data/tajweed";
 import { useRecitation } from "@/lib/player";
 import { surahMeta, toArabicDigits, useSurahs } from "@/lib/quran";
-import { actions, useChild, useProgress } from "@/lib/store";
+import { actions, useChild } from "@/lib/store";
 
 export function Tajweed() {
   const [active, setActive] = useState<string | null>(null);
@@ -71,7 +71,6 @@ function LessonList({ onOpen }: { onOpen: (id: string) => void }) {
 }
 
 function LessonView({ lesson, onBack }: { lesson: Lesson; onBack: () => void }) {
-  const mode = useProgress((s) => s.mode);
   const ids = useMemo(() => [...new Set(lesson.examples.map((e) => e.surah))], [lesson]);
   const surahs = useSurahs(ids);
   const player = useRecitation();
@@ -127,7 +126,7 @@ function LessonView({ lesson, onBack }: { lesson: Lesson; onBack: () => void }) 
                         <span className={`h-3.5 w-3.5 rounded-full ${rs.dot}`} />
                         <h3 className={`font-display text-xl font-extrabold ${rs.text}`}>{r.name}</h3>
                       </div>
-                      <p className="mt-2 leading-relaxed text-ink-700">{mode === "kids" ? r.kids : r.adults}</p>
+                      <p className="mt-2 leading-relaxed text-ink-700">{r.kids}</p>
                       {r.letters && (
                         <div className={`mt-3 rounded-2xl px-4 py-2 font-display text-lg font-bold ${rs.bg} ${rs.text}`}>
                           الحروف: <span className="tracking-wide">{r.letters}</span>

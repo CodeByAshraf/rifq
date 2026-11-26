@@ -53,13 +53,12 @@ export interface ActivityEntry {
 
 export interface ProgressState {
   version: 1;
-  mode: "kids" | "adult";
   activeChildId: string;
   children: ChildProfile[];
   /** Verse the learner chose to work on next (memorization center). */
   focus?: { surah: number; ayah: number };
   /** Answers from the welcome tour with Noor. */
-  onboarding?: { role: "kid" | "parent" | "adult"; goal: string; startHref: string; done: string };
+  onboarding?: { role: "kid" | "parent"; goal: string; startHref: string; done: string };
   /** Data per child id. */
   data: Record<string, ChildData>;
   /** Daily reminder preference. */
@@ -112,7 +111,6 @@ function emptyChild(): ChildData {
 function initial(): ProgressState {
   return {
     version: 1,
-    mode: "kids",
     activeChildId: "c1",
     children: [{ id: "c1", name: "صديقي", avatar: defaultAvatar, weeklyGoalMinutes: 60 }],
     data: { c1: emptyChild() },
@@ -198,13 +196,9 @@ function updateChild(fn: (d: ChildData) => ChildData) {
 }
 
 export const actions = {
-  setMode(mode: ProgressState["mode"]) {
-    set((s) => ({ ...s, mode }));
-  },
-  finishOnboarding(o: { role: "kid" | "parent" | "adult"; goal: string; startHref: string; dailyVerses?: number }) {
+  finishOnboarding(o: { role: "kid" | "parent"; goal: string; startHref: string; dailyVerses?: number }) {
     set((s) => ({
       ...s,
-      mode: o.role === "kid" ? "kids" : "adult",
       onboarding: { role: o.role, goal: o.goal, startHref: o.startHref, done: today() },
       children: o.dailyVerses ? s.children.map((c) => (c.id === s.activeChildId ? { ...c, dailyVerses: o.dailyVerses } : c)) : s.children,
     }));

@@ -126,55 +126,6 @@ export function Tower({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
   );
 }
 
-/** Open book resting on a wooden stand, emitting soft light. Pages show only abstract lines. */
-export function BookOnStand({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
-  const id = useId().replace(/:/g, "");
-  return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <defs>
-        <radialGradient id={`l${id}`} cx="50%" cy="60%" r="60%">
-          <stop offset="0" stopColor="#fff7cf" stopOpacity="0.95" />
-          <stop offset="1" stopColor="#ffe08a" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id={`p${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="1" stopColor="#f6ead3" />
-        </linearGradient>
-        <linearGradient id={`c${id}`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#14a093" />
-          <stop offset="1" stopColor="#0d6f68" />
-        </linearGradient>
-        <linearGradient id={`wd${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#d9a066" />
-          <stop offset="1" stopColor="#9c6537" />
-        </linearGradient>
-      </defs>
-      <ellipse cx="0" cy="-60" rx="150" ry="120" fill={`url(#l${id})`} />
-      {/* light rays */}
-      {[-50, -25, 0, 25, 50].map((a, i) => (
-        <path key={i} d="M0 -70 L-10 -190 L10 -190 Z" fill="#fff3c0" opacity="0.35" transform={`rotate(${a} 0 -70)`} />
-      ))}
-      <ellipse cx="0" cy="6" rx="78" ry="12" fill="#1d3a4a" opacity="0.16" />
-      {/* stand (X-shaped rehal) */}
-      <path d="M-62 0 L44 -52 L56 -44 L-50 8 Z" fill={`url(#wd${id})`} />
-      <path d="M62 0 L-44 -52 L-56 -44 L50 8 Z" fill={`url(#wd${id})`} />
-      {/* cover */}
-      <path d="M-88 -58 Q-44 -74 0 -60 Q44 -74 88 -58 L84 -46 Q42 -60 0 -46 Q-42 -60 -84 -46 Z" fill={`url(#c${id})`} />
-      {/* pages */}
-      <path d="M-82 -62 Q-42 -82 -2 -64 L-2 -118 Q-42 -136 -82 -116 Z" fill={`url(#p${id})`} />
-      <path d="M82 -62 Q42 -82 2 -64 L2 -118 Q42 -136 82 -116 Z" fill={`url(#p${id})`} />
-      {[0, 1, 2, 3, 4].map((i) => (
-        <g key={i} stroke="#cdb894" strokeWidth="2.2" strokeLinecap="round" opacity="0.7">
-          <path d={`M-70 ${-108 + i * 9} Q-42 ${-122 + i * 9} -14 ${-106 + i * 9}`} fill="none" />
-          <path d={`M70 ${-108 + i * 9} Q42 ${-122 + i * 9} 14 ${-106 + i * 9}`} fill="none" />
-        </g>
-      ))}
-      <path d="M-82 -116 Q-42 -136 -2 -118" stroke="#f5b52e" strokeWidth="2" fill="none" />
-      <path d="M82 -116 Q42 -136 2 -118" stroke="#f5b52e" strokeWidth="2" fill="none" />
-    </g>
-  );
-}
-
 export function Flower({ x, y, c = "#ff9a8b" }: { x: number; y: number; c?: string }) {
   return (
     <g transform={`translate(${x} ${y})`}>

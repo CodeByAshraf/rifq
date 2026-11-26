@@ -111,4 +111,10 @@ export const toArabicDigits = (n: number | string) =>
   String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
 
 /** Al-Fatihah plus all of Juz' Amma (An-Nas back to An-Naba), used by children's activities. */
-export const KIDS_SURAHS = [1, ...Array.from({ length: 37 }, (_, i) => 114 - i)];
+const KIDS_SURAHS = [1, ...Array.from({ length: 37 }, (_, i) => 114 - i)];
+
+/** Surah pickers: the children's surahs first (Al-Fatiha, then Juz' Amma from An-Nas), then the rest. */
+export const PICKER_SURAHS: SurahMeta[] = (() => {
+  const kids = new Set(KIDS_SURAHS);
+  return [...KIDS_SURAHS.map((id) => SURAHS[id - 1]), ...SURAHS.filter((s) => !kids.has(s.id))];
+})();

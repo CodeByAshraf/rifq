@@ -10,11 +10,10 @@ import { Chip, Modal } from "@/components/ui";
 import { useRecitation } from "@/lib/player";
 import { RECITERS, showBasmalaHeader, SURAHS, surahMeta, toArabicDigits, useSurah } from "@/lib/quran";
 import { STATE_COLOR, STATE_LABEL } from "@/lib/srs";
-import { actions, getState, useChild, useProgress, verseKey } from "@/lib/store";
+import { actions, getState, useChild, verseKey } from "@/lib/store";
 
 export function QuranReader() {
   const router = useRouter();
-  const mode = useProgress((s) => s.mode);
   const { data } = useChild();
   const [surahId, setSurahId] = useState(1);
   const [picker, setPicker] = useState(false);
@@ -83,8 +82,6 @@ export function QuranReader() {
     playFrom(n, n);
   };
 
-  const isKids = mode === "kids";
-
   return (
     <AppShell>
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -97,20 +94,20 @@ export function QuranReader() {
         </aside>
 
         <section className="min-w-0 pb-52">
-          <div className={`relative overflow-hidden rounded-[2rem] p-6 text-center ${isKids ? "bg-gradient-to-l from-teal-500 to-teal-700 text-white shadow-lift" : "border border-ink-300/30 bg-white"}`}>
-            {isKids && <div className="pattern-girih absolute inset-0 opacity-50 mix-blend-overlay" />}
+          <div className={`relative overflow-hidden rounded-[2rem] p-6 text-center bg-gradient-to-l from-teal-500 to-teal-700 text-white shadow-lift`}>
+            <div className="pattern-girih absolute inset-0 opacity-50 mix-blend-overlay" />
             <div className="relative">
-              <button onClick={() => setPicker(true)} className={`mb-2 rounded-full px-4 py-1.5 text-sm font-bold lg:hidden ${isKids ? "bg-white/20" : "bg-cream-100"}`}>
+              <button onClick={() => setPicker(true)} className={`mb-2 rounded-full px-4 py-1.5 text-sm font-bold lg:hidden bg-white/20`}>
                 تغيير السورة
               </button>
               <h1 className="font-display text-4xl font-extrabold">سورة {meta.name}</h1>
-              <p className={`mt-1 text-sm ${isKids ? "text-teal-50" : "text-ink-500"}`}>
+              <p className={`mt-1 text-sm text-teal-50`}>
                 {meta.type === "meccan" ? "مكّية" : "مدنية"} · {toArabicDigits(meta.verses)} آية · {meta.transliteration}
               </p>
               <div className="mt-4 flex items-center justify-center gap-2 text-sm">
-                <span className={isKids ? "text-teal-50" : "text-ink-500"}>حجم الخط</span>
+                <span className="text-teal-50">حجم الخط</span>
                 {[28, 34, 42].map((s, i) => (
-                  <button key={s} onClick={() => setFontSize(s)} className={`h-8 w-8 rounded-xl font-bold ${fontSize === s ? (isKids ? "bg-white text-teal-700" : "bg-ink-900 text-white") : isKids ? "bg-white/20" : "bg-cream-100"}`}>
+                  <button key={s} onClick={() => setFontSize(s)} className={`h-8 w-8 rounded-xl font-bold ${fontSize === s ? "bg-white text-teal-700" : "bg-white/20"}`}>
                     {["ص", "م", "ك"][i]}
                   </button>
                 ))}
@@ -166,7 +163,7 @@ export function QuranReader() {
                   </div>
                   {meaning === v.id && (
                     <div className="mt-3">
-                      <VerseMeaning surah={surahId} ayah={v.id} kids={isKids} />
+                      <VerseMeaning surah={surahId} ayah={v.id} />
                     </div>
                   )}
                 </div>

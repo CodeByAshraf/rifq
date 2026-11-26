@@ -115,8 +115,7 @@ export async function pullProgress(): Promise<{ ok: boolean; message: string }> 
   const err = [vp, lp, ach, bm, gs, act].find((r) => r.error);
   if (err?.error) return logError("select", err.error), FAIL;
 
-  const local = getState();
-  const next: ProgressState = { version: 1, mode: local.mode, activeChildId: "", children: [], data: {} };
+  const next: ProgressState = { version: 1, activeChildId: "", children: [], data: {} };
   for (const k of kids) {
     if (typeof k.id !== "string" || !/^[0-9a-f-]{36}$/i.test(k.id)) continue;
     const id = `r${k.id.replace(/-/g, "").slice(0, 12)}`;

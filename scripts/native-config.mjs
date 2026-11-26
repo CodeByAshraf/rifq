@@ -5,7 +5,7 @@
 //
 // Android: microphone (for «سمّع لنفسك»), notification and approximate-location permissions,
 //          notification icon, Fajr alarm sound.
-// iOS: Arabic as the development language, usage texts (microphone, camera, location),
+// iOS: Arabic as the development language, usage texts (microphone, location),
 //      export-compliance flag, the Privacy Manifest Apple requires, Fajr alarm sound.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -81,15 +81,13 @@ patch("mobile/ios/App/App/Info.plist", (s) => {
     "NSMicrophoneUsageDescription",
     "<string>يستخدم رِفق الميكروفون فقط عندما تضغط «ابدأ التسجيل» لتسمع تلاوتك، ويبقى التسجيل على جهازك.</string>",
   );
-  s = plistAdd(
-    s,
-    "NSCameraUsageDescription",
-    "<string>يستخدم رِفق الكاميرا فقط في تحدّي منبّه الفجر حين تختار تصوير مكان الوضوء، وتُقارَن الصورة على جهازك ولا تُرفع.</string>",
-  );
+  // The camera is no longer used (the adult "photo" alarm challenge was removed): drop its text,
+  // so the app does not declare a permission it never asks for.
+  s = s.replace(/\n\t<key>NSCameraUsageDescription<\/key>\n\t<string>[^<]*<\/string>/, "");
   s = plistAdd(
     s,
     "NSLocationWhenInUseUsageDescription",
-    "<string>يستخدم رِفق موقعك التقريبي مرّة واحدة لحساب وقت الفجر في مدينتك، ولا يغادر الموقع جهازك.</string>",
+    "<string>يستخدم رِفق الموقع التقريبي مرّة واحدة لحساب وقت الفجر في مدينتكم، ولا يغادر الموقع الهاتف.</string>",
   );
   // HTTPS only, no custom encryption: answers the export-compliance question automatically.
   s = plistAdd(s, "ITSAppUsesNonExemptEncryption", "<false/>");

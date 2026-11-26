@@ -1,10 +1,9 @@
 // Tests for the Fajr alarm: prayer-time accuracy against published timetables, the alarm state
 // machine, the notification plan (iOS 64-notification limit), settings validation, challenge
-// generators, and the photo-match threshold (calibrated on real photos when available).
+// generators.
 //
-//   node scripts/test-fajr.mjs            (photo calibration: put sample photos in $FAJR_PHOTOS)
+//   node scripts/test-fajr.mjs
 import { build } from "esbuild";
-import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 
@@ -16,9 +15,9 @@ await build({
       export * as times from "./src/lib/fajr/times";
       export * as settings from "./src/lib/fajr/settings";
       export * as challenges from "./src/lib/fajr/challenges";
-      export * as photo from "./src/lib/fajr/photo";
       export * as places from "./src/lib/fajr/places";
-      export * as locate from "./src/lib/fajr/locate";`,
+      export * as locate from "./src/lib/fajr/locate";
+      export * as gate from "./src/lib/parental-gate";`,
     resolveDir: root,
     loader: "ts",
   },
@@ -29,7 +28,7 @@ await build({
   logLevel: "error",
   external: ["react", "@capacitor/*"],
 });
-const { times, settings, challenges, photo, places, locate } = await import(out);
+const { times, settings, challenges, places, locate, gate } = await import(out);
 
 let groups = 0;
 const group = (name, fn) => {
@@ -152,9 +151,7 @@ group("settings: anything stored is validated", () => {
     place: { kind: "gps", lat: 999, lng: 0 },
     method: "Evil",
     offset: 1e9,
-    level: "root",
     challenges: ["math", "<script>", "dua"],
-    difficulty: 9,
     days: [1, 2],
     log: { "2026-11-18": { solvedAt: "x" }, "../../etc": {} },
     testAt: -5,
@@ -164,9 +161,8 @@ group("settings: anything stored is validated", () => {
   assert.equal(junk.place, null);
   assert.equal(junk.method, "Egyptian");
   assert.equal(junk.offset, 0);
-  assert.equal(junk.level, "adult");
-  assert.deepEqual(junk.challenges, ["math"], "only challenges of the level");
-  assert.equal(junk.difficulty, 2);
+  assert.deepEqual(junk.challenges, ["dua"], "unknown challenges dropped");
+  assert.deepEqual(settings.sanitizeSettings({ challenges: ["math", "photo"] }).challenges, ["dua", "count", "colors"], "old adult challenges fall back to the kids' set");
   assert.equal(junk.days.length, 7);
   assert.deepEqual(Object.keys(junk.log), ["2026-11-18"]);
   assert.equal(junk.testAt, null);
@@ -196,86 +192,29 @@ group("dua puzzle uses the exact verified text and is never pre-solved", () => {
   }
 });
 
-group("counting, colours, maths and memory generators", () => {
+group("counting and colour generators; number parsing; parental gate", () => {
   for (let i = 0; i < 300; i++) {
     for (const r of challenges.countRounds(rnd)) {
       assert.ok(r.options.includes(r.n) && new Set(r.options).size === 3 && r.options.every((o) => o >= 1 && o <= 12));
     }
     const seq = challenges.colorSequence(rnd, 4);
     assert.ok(seq.every((v, k) => v >= 0 && v < 4 && (k === 0 || v !== seq[k - 1])));
-    for (const d of [1, 2, 3]) {
-      const p = challenges.mathProblem(rnd, d);
-      const expr = p.text.replace("×", "*");
-      assert.equal(Function(`return ${expr}`)(), p.answer, p.text);
-      assert.ok(p.answer > 20 && p.answer < 2000);
-    }
-    const cells = challenges.memoryCells(rnd, 6);
-    assert.ok(cells.length === 6 && new Set(cells).size === 6 && cells.every((c) => c >= 0 && c < 16));
+    const q = gate.gateQuestion(rnd);
+    const words = ["ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
+    const [a, b] = q.text.split(" × ").map((w) => words.indexOf(w) + 3);
+    assert.ok(a >= 3 && b >= 3 && q.answer === a * b && !/\d/.test(q.text), q.text);
   }
   assert.equal(challenges.parseNumber("١٢٣"), 123);
   assert.equal(challenges.parseNumber("۴۵"), 45);
   assert.equal(challenges.parseNumber(" 77 "), 77);
   assert.equal(challenges.parseNumber("1e3"), null);
   assert.equal(challenges.parseNumber(""), null);
-});
-
-// ---------------------------------------------------------------- photo match
-const { default: sharp } = await import("sharp");
-const base72 = async (img) => {
-  const { data } = await img.resize(photo.BASE_W, photo.BASE_H, { fit: "cover", position: "centre" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  return photo.fingerprintFromPixels(data);
-};
-
-const photosDir = process.env.FAJR_PHOTOS || "/tmp/photos";
-const files = existsSync(photosDir) ? readdirSync(photosDir).filter((f) => /\.(jpe?g|png)$/i.test(f)).map((f) => path.join(photosDir, f)) : [];
-const sameScene = [];
-const different = [];
-if (files.length >= 4) {
-  // Same place, different shot: darker room, slight zoom/shift, small tilt, phone noise/blur.
-  for (const f of files) {
-    const ref = await base72(sharp(f));
-    const meta = await sharp(f).metadata();
-    const w = meta.width;
-    const h = meta.height;
-    const variants = [
-      sharp(f).modulate({ brightness: 0.6 }),
-      sharp(f).modulate({ brightness: 1.3, saturation: 0.85 }),
-      sharp(f).extract({ left: Math.round(w * 0.05), top: Math.round(h * 0.04), width: Math.round(w * 0.9), height: Math.round(h * 0.9) }),
-      sharp(f).rotate(4, { background: "#808080" }).extract({ left: Math.round(w * 0.06), top: Math.round(h * 0.06), width: Math.round(w * 0.85), height: Math.round(h * 0.85) }),
-      sharp(f).blur(2).modulate({ brightness: 0.8 }),
-      sharp(f).tint({ r: 255, g: 220, b: 170 }), // warm night bulb
-    ];
-    for (const v of variants) sameScene.push(photo.similarity(ref, await base72(sharp(await v.toBuffer()))));
-  }
-  // OpenCV sample pairs that show the same scene (stereo pair, chessboard, graffiti wall).
-  const scene = (f) => path.basename(f).replace(/(L|R|\d)?\.(jpe?g|png)$/i, "").replace(/0$/, "");
-  const fps = await Promise.all(files.map((f) => base72(sharp(f))));
-  for (let i = 0; i < fps.length; i++)
-    for (let j = i + 1; j < fps.length; j++) {
-      if (scene(files[i]) === scene(files[j])) continue;
-      different.push([path.basename(files[i]), path.basename(files[j]), photo.similarity(fps[i], fps[j])]);
-    }
-}
-
-group(`photo match threshold ${photo.MATCH} (${sameScene.length} same-place shots, ${different.length} different pairs)`, () => {
-  // Pure parts work without sample photos.
-  assert.equal(photo.hamming("ffffffffffffffff", "0000000000000000"), 64);
-  assert.equal(photo.hamming("0f0f0f0f0f0f0f0f", "0f0f0f0f0f0f0f0f"), 0);
-  const h = photo.colorHist(new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 255]));
-  assert.ok(Math.abs(h.reduce((a, v) => a + v, 0) - 1) < 1e-9);
-  if (!sameScene.length) return console.log("    (no sample photos: calibration skipped)");
-  const minSame = Math.min(...sameScene);
-  const sorted = [...different].sort((a, b) => b[2] - a[2]);
-  const maxDiff = sorted[0][2];
-  const passSame = sameScene.filter((v) => v >= photo.MATCH).length / sameScene.length;
-  if (process.env.FAJR_VERBOSE) {
-    console.log("    same:", sameScene.map((v) => v.toFixed(2)).sort().join(" "));
-    console.log("    diff:", sorted.slice(0, 8).map((d) => `${d[0]}/${d[1]}=${d[2].toFixed(2)}`).join(" "));
-  }
-  console.log(`    same place: min ${minSame.toFixed(3)}, ${(passSame * 100).toFixed(0)}% accepted`);
-  console.log(`    different:  max ${maxDiff.toFixed(3)} (${sorted[0][0]} vs ${sorted[0][1]})`);
-  assert.ok(passSame >= 0.9, "at least 90% of same-place shots must be accepted");
-  assert.ok(different.every((d) => d[2] < photo.MATCH), "no two different places may match");
+  assert.equal(gate.isUnlocked(0), false);
+  gate.unlock(1000);
+  assert.equal(gate.isUnlocked(1000 + 4 * 60_000), true);
+  assert.equal(gate.isUnlocked(1000 + 6 * 60_000), false, "the gate locks again after a few minutes");
+  for (const r of ["/parents", "/family", "/login", "/app", "/fajr"]) assert.ok(gate.PARENT_ROUTES.has(r), r);
+  assert.ok(!gate.PARENT_ROUTES.has("/fajr-wake"), "the wake-up screen must never be gated");
 });
 
 console.log(`fajr: ${groups} test groups passed`);

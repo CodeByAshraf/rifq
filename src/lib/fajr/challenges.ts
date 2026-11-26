@@ -1,5 +1,5 @@
 /**
- * Wake-up challenges. Generators are pure and take a random function so tests can make them
+ * Wake-up challenges for children. Generators are pure and take a random function so tests can make them
  * deterministic. The dua puzzle only re-orders the exact verified text from adhkar.json; it
  * never builds, changes or drops a word.
  */
@@ -94,37 +94,6 @@ export function colorSequence(r: Rand, length: number): number[] {
     seq.push(v);
   }
   return seq;
-}
-
-// ---------- adults: arithmetic ----------
-
-export interface MathProblem {
-  text: string;
-  answer: number;
-}
-
-export function mathProblem(r: Rand, difficulty: 1 | 2 | 3): MathProblem {
-  if (difficulty === 1) {
-    const a = int(r, 12, 89);
-    const b = int(r, 12, 89);
-    return { text: `${a} + ${b}`, answer: a + b };
-  }
-  if (difficulty === 2) {
-    const a = int(r, 12, 39);
-    const b = int(r, 3, 9);
-    const c = int(r, 11, 59);
-    return { text: `${a} × ${b} + ${c}`, answer: a * b + c };
-  }
-  const a = int(r, 13, 49);
-  const b = int(r, 12, 29);
-  return { text: `${a} × ${b}`, answer: a * b };
-}
-
-// ---------- adults: memory grid ----------
-
-export const GRID = 16;
-export function memoryCells(r: Rand, count: number): number[] {
-  return shuffle(Array.from({ length: GRID }, (_, i) => i), r).slice(0, count).sort((a, b) => a - b);
 }
 
 /** Parses digits typed in Arabic-Indic, Persian or Latin form. */

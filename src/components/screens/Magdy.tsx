@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { MagdyImage } from "@/components/art/Magdy";
-import { IconCheck, IconPlay, IconStar } from "@/components/art/Icons";
+import { IconPlay, IconStar } from "@/components/art/Icons";
 import { AyahMark, VerseText } from "@/components/quran/VerseText";
 import { AppShell } from "@/components/shell/AppShell";
 import { Button, Card } from "@/components/ui";
@@ -9,7 +9,6 @@ import { playSfx } from "@/lib/fx";
 import { useRecitation } from "@/lib/player";
 import { surahMeta, toArabicDigits, useSurah } from "@/lib/quran";
 import { actions, useProgress } from "@/lib/store";
-import { SHARE_URL, shareText as shareNative } from "@/lib/native";
 
 /** Duas for parents from the Quran — rendered from the verified text. */
 const QURAN_DUAS: [number, number][] = [
@@ -48,27 +47,13 @@ function QuranDua({ surah, ayah }: { surah: number; ayah: number }) {
 
 export function Magdy() {
   const count = useProgress((s) => s.magdyDuas ?? 0);
-  const [copied, setCopied] = useState(false);
   const [thanks, setThanks] = useState(false);
-  const url = SHARE_URL;
-  const shareText = "رِفق — تطبيقٌ يُحبّب الأطفال في القرآن الكريم، وهو صدقةٌ جارية عن الوالد مجدي. شاركه، فالدالّ على الخير كفاعله.";
 
   const pray = () => {
     actions.prayForMagdy();
     playSfx("correct");
     setThanks(true);
     setTimeout(() => setThanks(false), 2500);
-  };
-
-  const share = async () => {
-    if (await shareNative({ title: "رِفق", text: shareText, url: url || undefined })) return;
-    try {
-      await navigator.clipboard.writeText(url ? `${shareText}\n${url}` : shareText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      /* ignore */
-    }
   };
 
   return (
@@ -88,15 +73,6 @@ export function Magdy() {
             <div className="mt-6 flex flex-wrap justify-center gap-3 sm:justify-start">
               <Button size="lg" onClick={pray}>
                 <IconStar filled size={20} /> دعوتُ له
-              </Button>
-              <Button size="lg" tone="sun" onClick={share}>
-                {copied ? (
-                  <>
-                    <IconCheck size={20} /> نُسخ النصّ
-                  </>
-                ) : (
-                  "شارك التطبيق"
-                )}
               </Button>
             </div>
             <motion.p key={count} initial={{ scale: 1.2, opacity: 0.4 }} animate={{ scale: 1, opacity: 1 }} className="mt-4 text-sm font-bold text-ink-500">

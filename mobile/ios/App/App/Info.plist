@@ -3,9 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>يستخدم رِفق موقعك التقريبي مرّة واحدة لحساب وقت الفجر في مدينتك، ولا يغادر الموقع جهازك.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>يستخدم رِفق الكاميرا فقط في تحدّي منبّه الفجر حين تختار تصوير مكان الوضوء، وتُقارَن الصورة على جهازك ولا تُرفع.</string>
+	<string>يستخدم رِفق الموقع التقريبي مرّة واحدة لحساب وقت الفجر في مدينتكم، ولا يغادر الموقع الهاتف.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSMicrophoneUsageDescription</key>

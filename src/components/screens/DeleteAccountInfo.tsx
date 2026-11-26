@@ -22,14 +22,14 @@ export function DeleteAccountInfo() {
   return (
     <>
       <h1 className="font-display text-3xl font-extrabold">حذف حساب رِفق وبياناته</h1>
-      <p className="mt-2 text-ink-500">تطبيق رِفق لتعليم القرآن الكريم للأطفال والكبار</p>
+      <p className="mt-2 text-ink-500">تطبيق رِفق لتعليم الأطفال القرآن الكريم</p>
 
       <div className="mt-6 space-y-4">
         <Card className="p-5 sm:p-6">
           <h2 className="font-display text-xl font-extrabold">من داخل التطبيق (فوريّ)</h2>
           <ol className="mt-3 list-inside list-decimal space-y-1 leading-relaxed text-ink-700">
             <li>افتح رِفق وسجّل الدخول بحسابك.</li>
-            <li>اذهب إلى «المزيد» ← «الحساب».</li>
+            <li>اذهب إلى «المزيد» ← «ركن الوالدين» ← «حساب العائلة».</li>
             <li>اضغط «حذف حسابي نهائيًا» ثمّ «نعم، احذف حسابي».</li>
           </ol>
         </Card>
@@ -63,7 +63,7 @@ export function DeleteAccountInfo() {
           </p>
           <p className="mt-3 leading-relaxed text-ink-700">
             البيانات المحفوظة على هاتفك فقط (التقدّم دون حساب، والتسجيلات، والتذكير، ومنبّه الفجر) لا تصل إلينا أصلًا؛ تُحذف بمسح
-            التطبيق أو من «المزيد» ← «التذكير وبياناتك» ← «مسح كلّ بيانات رِفق من هذا الجهاز».
+            التطبيق أو من «المزيد» ← «ركن الوالدين» ← «التذكير وبيانات الجهاز» ← «مسح كلّ بيانات رِفق من هذا الجهاز».
           </p>
         </Card>
       </div>

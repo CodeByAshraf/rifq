@@ -1,14 +1,13 @@
 import { Link } from "@/components/shell/Link";
 import { useEffect, useMemo, useState } from "react";
-import { IconAlarm, IconCamera, IconCheck, IconPin, IconShield } from "@/components/art/Icons";
+import { IconAlarm, IconCheck, IconPin, IconShield } from "@/components/art/Icons";
 import { CHALLENGE_TITLES } from "@/components/fajr/WakeChallenges";
 import { AppShell } from "@/components/shell/AppShell";
 import { Button, Card, SectionTitle } from "@/components/ui";
 import { alarmPermissionState, applyPlan, cancelTest, openExactAlarmSettings, requestAlarmPermissions, scheduleTest, type PermissionResult } from "@/lib/fajr/alarm";
 import { locate, nearestCity } from "@/lib/fajr/locate";
-import { loadReference, makeReference, saveReference, type PhotoRef } from "@/lib/fajr/photo";
 import { CITIES, cityById, METHODS, type MethodId } from "@/lib/fajr/places";
-import { ADULT_CHALLENGES, defaultChallenges, KID_CHALLENGES, updateSettings, useFajrSettings, type ChallengeId, type FajrSettings, type Level } from "@/lib/fajr/settings";
+import { CHALLENGES, updateSettings, useFajrSettings, type ChallengeId, type FajrSettings } from "@/lib/fajr/settings";
 import { alarmTime, fajrTime, nextAlarm } from "@/lib/fajr/times";
 import { isNative } from "@/lib/native";
 import { toArabicDigits } from "@/lib/quran";
@@ -37,13 +36,10 @@ export function Fajr() {
   const native = isNative();
   const [perm, setPerm] = useState<PermissionResult | null>(null);
   const [locMsg, setLocMsg] = useState("");
-  const [photo, setPhoto] = useState<PhotoRef | null>(null);
-  const [photoBusy, setPhotoBusy] = useState(false);
   const [testMsg, setTestMsg] = useState("");
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    setPhoto(loadReference());
     if (native) alarmPermissionState().then(setPerm).catch(() => {});
     const t = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(t);
@@ -77,7 +73,6 @@ export function Fajr() {
     if (c) change({ place: { kind: "city", id }, method: c.method });
   };
 
-  const setLevel = (level: Level) => change({ level, challenges: defaultChallenges(level) });
 
   const toggleChallenge = (id: ChallengeId) => {
     const has = s.challenges.includes(id);
@@ -102,28 +97,6 @@ export function Fajr() {
     applyPlan().catch(() => {});
   };
 
-  const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    e.target.value = "";
-    if (!f) return;
-    setPhotoBusy(true);
-    try {
-      const ref = await makeReference(f);
-      saveReference(ref);
-      setPhoto(ref);
-      if (!s.challenges.includes("photo")) change({ challenges: [...s.challenges, "photo"] });
-    } finally {
-      setPhotoBusy(false);
-    }
-  };
-
-  const removePhoto = () => {
-    saveReference(null);
-    setPhoto(null);
-    const list = s.challenges.filter((c) => c !== "photo");
-    change({ challenges: list.length ? list : defaultChallenges("adult") });
-  };
-
   const test = async () => {
     const p = await requestAlarmPermissions();
     setPerm(p);
@@ -132,7 +105,6 @@ export function Fajr() {
     setTestMsg("سيرنّ المنبّه بعد دقيقة. أغلق الشاشة وانتظره.");
   };
 
-  const challenges = s.level === "kid" ? KID_CHALLENGES : ADULT_CHALLENGES;
   const testPending = s.testAt !== null && s.testAt > now.getTime() - 20 * 60_000;
 
   return (
@@ -142,7 +114,7 @@ export function Fajr() {
         <div className="relative">
           <IconAlarm size={44} className="text-sun-300" />
           <h1 className="mt-2 font-display text-4xl font-extrabold">منبّه صلاة الفجر</h1>
-          <p className="mt-2 max-w-lg text-white/85">يرنّ في وقت الفجر بمدينتك، ولا يسكت حتى تحلّ تحدّيًا يثبت أنّك استيقظت فعلًا.</p>
+          <p className="mt-2 max-w-lg text-white/85">يوقظ طفلك في وقت الفجر، ولا يسكت حتى يحلّ تحدّيًا لطيفًا يثبت أنّه استيقظ فعلًا.</p>
           {s.enabled && next && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-white/15 px-4 py-2 font-display font-bold">
               <IconCheck size={18} /> المنبّه القادم: {dayName(next)} — {time(next)}
@@ -227,72 +199,15 @@ export function Fajr() {
         </Card>
 
         <Card className="p-6">
-          <SectionTitle title="مَن سيستيقظ؟" hint="التحدّي يختلف للأطفال والكبار" />
-          <div className="grid grid-cols-2 gap-2">
-            {(["kid", "adult"] as Level[]).map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setLevel(l)}
-                className={`h-12 rounded-2xl font-display font-bold ${s.level === l ? "bg-teal-500 text-white" : "bg-cream-100 text-ink-700"}`}
-              >
-                {l === "kid" ? "طفل" : "كبير"}
-              </button>
+          <SectionTitle title="تحدّيات الاستيقاظ" hint="يُختار واحدٌ كلّ صباح، ولا يسكت المنبّه حتى يحلّه طفلك" />
+          <div className="space-y-2">
+            {CHALLENGES.map((c) => (
+              <label key={c} className="flex items-center justify-between rounded-2xl bg-cream-100 p-3 font-bold">
+                {CHALLENGE_TITLES[c]}
+                <input type="checkbox" checked={s.challenges.includes(c)} onChange={() => toggleChallenge(c)} className="h-6 w-6 accent-teal-500" />
+              </label>
             ))}
           </div>
-
-          <div className="mt-4 text-sm font-bold text-ink-700">التحدّيات (يُختار واحدٌ كلّ صباح)</div>
-          <div className="mt-2 space-y-2">
-            {challenges.map((c) => {
-              const disabled = c === "photo" && !photo;
-              return (
-                <label key={c} className={`flex items-center justify-between rounded-2xl bg-cream-100 p-3 font-bold ${disabled ? "opacity-60" : ""}`}>
-                  {CHALLENGE_TITLES[c]}
-                  <input type="checkbox" checked={s.challenges.includes(c)} disabled={disabled} onChange={() => toggleChallenge(c)} className="h-6 w-6 accent-teal-500" />
-                </label>
-              );
-            })}
-          </div>
-
-          {s.level === "adult" && (
-            <>
-              <div className="mt-4 text-sm font-bold text-ink-700">الصعوبة</div>
-              <div className="mt-1 grid grid-cols-3 gap-2">
-                {([1, 2, 3] as const).map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => change({ difficulty: d })}
-                    className={`h-11 rounded-2xl font-bold ${s.difficulty === d ? "bg-teal-500 text-white" : "bg-cream-100 text-ink-700"}`}
-                  >
-                    {d === 1 ? "سهل" : d === 2 ? "متوسّط" : "صعب"}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-5 rounded-2xl bg-sky-100 p-4">
-                <div className="flex items-center gap-2 font-display font-bold">
-                  <IconCamera size={20} /> صورة مكان الوضوء
-                </div>
-                {photo ? (
-                  <div className="mt-3 flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo.thumb} alt="الصورة المحفوظة" width={72} height={72} className="rounded-xl" />
-                    <button type="button" onClick={removePhoto} className="text-sm font-bold text-coral-500">
-                      حذف الصورة
-                    </button>
-                  </div>
-                ) : (
-                  <p className="mt-1 text-sm text-ink-500">صوّر الحوض أو مكان الوضوء الآن، وعند الفجر ستصوّره من نفس الزاوية ليتوقّف المنبّه.</p>
-                )}
-                <label className="clay clay-white mt-3 inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 font-display font-bold text-ink-900">
-                  {photoBusy ? "جارٍ الحفظ…" : photo ? "صورة جديدة" : "التقط الصورة"}
-                  <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={onPhoto} disabled={photoBusy} />
-                </label>
-                <p className="mt-2 text-xs text-ink-500">لا تُرفع الصورة: تُحفظ بصمةٌ صغيرة منها على جهازك فقط.</p>
-              </div>
-            </>
-          )}
 
           <Link href="/fajr-wake" className="mt-5 block text-center text-sm font-bold text-teal-700 underline-offset-4 hover:underline">
             جرّب التحدّي الآن
@@ -358,7 +273,7 @@ export function Fajr() {
 
       <p className="mt-6 flex items-start gap-2 text-xs leading-relaxed text-ink-500">
         <IconShield size={16} className="mt-0.5 shrink-0 text-teal-600" />
-        يُحسب وقت الفجر على جهازك دون إنترنت. موقعك وصورتك لا يغادران الهاتف.{" "}
+        يُحسب وقت الفجر على الهاتف دون إنترنت، والموقع لا يغادر الهاتف.{" "}
         <Link href="/privacy" className="font-bold underline-offset-4 hover:underline">
           سياسة الخصوصية
         </Link>

@@ -11,9 +11,9 @@ import { nextVerseToLearn } from "@/lib/learning";
 import { LinkVerses, MissingWord, SurahRecital } from "@/components/screens/MemorizeModes";
 import { VerseMeaning } from "@/components/quran/VerseMeaning";
 import { useRecitation } from "@/lib/player";
-import { KIDS_SURAHS, RECITERS, SURAHS, surahMeta, toArabicDigits, useSurah, words } from "@/lib/quran";
+import { PICKER_SURAHS, RECITERS, surahMeta, toArabicDigits, useSurah, words } from "@/lib/quran";
 import { STATE_COLOR, STATE_LABEL, type Rating } from "@/lib/srs";
-import { actions, getState, useChild, useProgress, verseKey } from "@/lib/store";
+import { actions, getState, useChild, verseKey } from "@/lib/store";
 
 const STEPS = [
   { t: "استمع", d: "استمع إلى الآية بتركيز", icon: IconHeadphones },
@@ -35,7 +35,6 @@ function shuffle<T>(arr: T[]) {
 }
 
 export function Memorize() {
-  const mode = useProgress((s) => s.mode);
   const { data } = useChild();
   const [surahId, setSurahId] = useState<number | null>(null);
   const [ayah, setAyah] = useState(1);
@@ -111,7 +110,6 @@ export function Memorize() {
     }
   };
 
-  const surahOptions = mode === "kids" ? KIDS_SURAHS.map((id) => surahMeta(id)) : SURAHS;
 
   return (
     <AppShell>
@@ -125,7 +123,7 @@ export function Memorize() {
             <h1 className="font-display text-2xl font-extrabold">مركز الحفظ</h1>
             <div className="mr-auto flex flex-wrap items-center gap-2">
               <select value={surahId ?? 1} onChange={(e) => { setSurahId(+e.target.value); setAyah(1); }} className="h-10 rounded-2xl bg-cream-100 px-3 font-display font-bold" aria-label="السورة">
-                {surahOptions.map((s) => (
+                {PICKER_SURAHS.map((s) => (
                   <option key={s.id} value={s.id}>سورة {s.name}</option>
                 ))}
               </select>
@@ -302,8 +300,8 @@ export function Memorize() {
           </Card>
           {surahId && (
             <Card className="p-5">
-              <h2 className="mb-3 font-display text-lg font-extrabold">{mode === "kids" ? "ماذا تعني الآية؟" : "معنى الآية"}</h2>
-              <VerseMeaning surah={surahId} ayah={ayah} kids={mode === "kids"} />
+              <h2 className="mb-3 font-display text-lg font-extrabold">ماذا تعني الآية؟</h2>
+              <VerseMeaning surah={surahId} ayah={ayah} />
             </Card>
           )}
           <Card className="p-5">
@@ -335,7 +333,7 @@ export function Memorize() {
         actions={
           <>
             <Button onClick={nextVerse}>الآية التالية</Button>
-            <LinkButton href={mode === "kids" ? "/kids" : "/adult"} tone="white">لوحتي</LinkButton>
+            <LinkButton href="/kids" tone="white">عالمي</LinkButton>
           </>
         }
       />

@@ -87,9 +87,6 @@ export const IconEyeOff = ({ size, ...r }: P) => (
 export const IconHeadphones = ({ size, ...r }: P) => (
   <svg {...base(size, r)}><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3" y="14" width="4.5" height="6.5" rx="2" /><rect x="16.5" y="14" width="4.5" height="6.5" rx="2" /></svg>
 );
-export const IconChart = ({ size, ...r }: P) => (
-  <svg {...base(size, r)}><path d="M4 20h16" /><path d="M7 16v-4M12 16V7M17 16v-6" /></svg>
-);
 export const IconCalendar = ({ size, ...r }: P) => (
   <svg {...base(size, r)}><rect x="4" y="5.5" width="16" height="15" rx="3" /><path d="M4 10h16M9 3.5v4M15 3.5v4" /></svg>
 );
@@ -113,9 +110,6 @@ export const IconStories = ({ size, ...r }: P) => (
 );
 export const IconAlarm = ({ size, ...r }: P) => (
   <svg {...base(size, r)}><circle cx="12" cy="13" r="7.5" /><path d="M12 9v4l2.5 2M4 5.5 6.5 3M20 5.5 17.5 3" /></svg>
-);
-export const IconCamera = ({ size, ...r }: P) => (
-  <svg {...base(size, r)}><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="12.5" r="3.5" /></svg>
 );
 export const IconPin = ({ size, ...r }: P) => (
   <svg {...base(size, r)}><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.3" /></svg>

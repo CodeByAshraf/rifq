@@ -1,9 +1,10 @@
 # رِفق | RIFQ — Your Companion on the Journey of the Quran
 
-An Arabic-first (RTL) Quran learning app for Android and iOS, for children and adults:
+An Arabic-first (RTL) Quran learning app for children, for Android and iOS:
 reading with verse-by-verse recitation and repetition, a 7-step memorization flow,
-spaced-repetition revision, a Tajweed academy, six educational mini-games, a children's
-journey map with rewards, an adult dashboard and a family dashboard.
+spaced-repetition revision, a Tajweed academy, six educational mini-games, stories, a journey
+map with rewards, and a parents' corner (behind a parental gate) for the family account,
+children's progress, the reminder and the Fajr alarm.
 
 ## Stack
 Capacitor 8 (Android + iOS) · React · TypeScript · Tailwind CSS v4 · Framer Motion · esbuild · Supabase (optional)
@@ -74,7 +75,7 @@ scripts/            build, content import/verification, tests, native config, st
 ```
 
 ## Playful feedback
-- Every tap in children's mode makes a burst of stars and hearts, and buttons bounce when pressed (`src/lib/fx.ts`).
+- Every tap makes a burst of stars and hearts, and buttons bounce when pressed (`src/lib/fx.ts`).
 - Moving between screens opens the new screen as a growing bubble from the spot the child tapped (`PageTransition` in `src/components/shell/Fx.tsx`).
 - Short UI sounds are made with the Web Audio API (never speech or recitation). A sound on/off button sits in the header.
 - All motion is turned off for users who prefer reduced motion.
@@ -98,7 +99,10 @@ scripts/            build, content import/verification, tests, native config, st
 - **My recitation** (`/recite`): records with MediaRecorder, stores only in IndexedDB on the device, compare with reciter.
 - **Challenges** (`/challenges`): Friday Al-Kahf, Ramadan khatma, first ten days of Dhul-Hijjah (Umm al-Qura calendar).
 - **Reminder** (`/app`): a daily local notification, an in-app reminder, and "delete all data on this device".
-- **Baba Magdy page** (`/magdy`): dedication, duas for parents from the verified Quran text, sharing.
+- **Parents' corner** (`/parents`): account, family, reminder, Fajr alarm settings and sharing. These screens open
+  only after a multiplication written in words is answered (`src/lib/parental-gate.ts`), as the stores' kids
+  rules require; the unlock lasts 5 minutes and is never stored.
+- **Baba Magdy page** (`/magdy`): dedication and duas for parents from the verified Quran text (sharing is in the parents' corner).
 
 - **Store pages**: the privacy policy and the account-deletion page that the stores require as public links
   are rendered from the in-app screens by `npm run build:legal` and published to GitHub Pages
@@ -112,4 +116,4 @@ Not yet run on a physical phone: native notifications, microphone, share sheet (
 
 ### Fajr alarm
 
-`/fajr` holds the settings and `/fajr-wake` is the wake-up screen. It works offline and keeps all its data on the device. `npm run test:fajr` checks the computed times against published timetables, the alarm state machine and the notification plan. To also calibrate the photo match, put sample photos in `$FAJR_PHOTOS`. Details and limits are in MOBILE.md.
+`/fajr` holds the settings and `/fajr-wake` is the wake-up screen. It works offline and keeps all its data on the device. `npm run test:fajr` checks the computed times against published timetables, the alarm state machine and the notification plan. Details and limits are in MOBILE.md.

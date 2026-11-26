@@ -132,18 +132,17 @@ function getLayer() {
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-function burst(x: number, y: number, playful: boolean) {
+function burst(x: number, y: number) {
   if (reduced()) return;
   const host = getLayer();
 
   // soft ring
   const ring = document.createElement("div");
-  const ringColor = playful ? COLORS[Math.floor(Math.random() * COLORS.length)] : "rgba(29,58,74,0.25)";
+  const ringColor = COLORS[Math.floor(Math.random() * COLORS.length)];
   ring.style.cssText = `position:absolute;left:${x - 22}px;top:${y - 22}px;width:44px;height:44px;border-radius:50%;border:3px solid ${ringColor};`;
   host.appendChild(ring);
   ring.animate([{ transform: "scale(0.2)", opacity: 0.9 }, { transform: "scale(1.6)", opacity: 0 }], { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" }).onfinish = () => ring.remove();
 
-  if (!playful) return;
   const n = 8;
   for (let i = 0; i < n; i++) {
     const el = document.createElement("div");
@@ -171,17 +170,16 @@ function burst(x: number, y: number, playful: boolean) {
 const INTERACTIVE = "button, a, [role=button], select, .clay, .card-3d, label";
 
 /** Install global listeners once. Returns a cleanup function. */
-export function installTapEffects(getMode: () => "kids" | "adult") {
+export function installTapEffects() {
   const down = (e: PointerEvent) => {
     interacted = true;
     lastTap = { x: e.clientX, y: e.clientY, at: Date.now() };
-    const playful = getMode() === "kids";
-    burst(e.clientX, e.clientY, playful);
+    burst(e.clientX, e.clientY);
     const target = (e.target as Element | null)?.closest(INTERACTIVE);
-    if (playful && target) playSfx("tap");
+    if (target) playSfx("tap");
   };
   const up = (e: PointerEvent) => {
-    if (getMode() !== "kids" || reduced()) return;
+    if (reduced()) return;
     const el = (e.target as Element | null)?.closest<HTMLElement>("button, a, .clay");
     if (!el || (el as HTMLButtonElement).disabled) return;
     el.classList.remove("boing");

@@ -16,7 +16,7 @@ import { actions } from "@/lib/store";
 import { FROM_INTRO_KEY } from "@/components/shell/FirstVisitIntro";
 
 type Icon = ComponentType<{ size?: number; className?: string }>;
-type Role = "kid" | "parent" | "adult";
+type Role = "kid" | "parent";
 type GoalId = "hifz" | "tajweed" | "tilawa" | "revision" | "stories" | "family";
 
 interface PlanStep {
@@ -47,7 +47,6 @@ const GOALS: Goal[] = [
     noor: "رائع! الحفظ في رِفق خطواتٌ صغيرة كلّ يوم، مع مراجعةٍ ذكية حتى لا تنسى. هذه خطّتك:",
     start: "/memorize",
     steps: [
-      { icon: IconCalendar, title: "اختر وِردك اليومي", text: "حدّد عدد الآيات الجديدة كلّ يوم. القليل الدائم أفضل من الكثير المنقطع.", where: "لوحتي ← خطّة الحفظ" },
       { icon: IconHeadphones, title: "استمع إلى الآية", text: "استمع إلى القارئ عدّة مرات وتابع الكلمات بعينيك.", where: "مركز الحفظ ← الخطوة ١" },
       { icon: IconRefresh, title: "ردّد ثم اقرأ بنفسك", text: "ردّد خلف القارئ في الوقفات، ثم اقرأ الآية بصوتك خمس مرات.", where: "مركز الحفظ ← الخطوتان ٢ و٣" },
       { icon: IconEyeOff, title: "أخفِ الكلمات تدريجيًا", text: "تختفي الكلمات شيئًا فشيئًا حتى تقرأ الآية كاملةً من حفظك، ثم رتّب كلماتها في التحدّي.", where: "مركز الحفظ ← الخطوات ٤ إلى ٦" },
@@ -201,7 +200,6 @@ export function Welcome() {
   const [tourIdx, setTourIdx] = useState(0);
   const [role, setRole] = useState<Role | null>(null);
   const [goal, setGoal] = useState<Goal | null>(null);
-  const [daily, setDaily] = useState(3);
   const [planIdx, setPlanIdx] = useState(0);
   /** A short celebratory sound for the choice, then move on. */
   const choose = (fn: () => void) => {
@@ -218,11 +216,12 @@ export function Welcome() {
 
   const finish = (to: string) => {
     if (!goal || !role) return;
-    actions.finishOnboarding({ role, goal: goal.id, startHref: goal.start, dailyVerses: goal.id === "hifz" ? daily : undefined });
+    actions.finishOnboarding({ role, goal: goal.id, startHref: goal.start });
     router.push(to);
   };
 
-  const goals = GOALS.filter((g) => (role === "kid" ? g.id !== "family" : true));
+  const goals = GOALS.filter((g) => g.id !== "family");
+  const familyGoal = GOALS.find((g) => g.id === "family")!;
 
   return (
     <div className="sky-bg relative min-h-dvh overflow-hidden">
@@ -245,7 +244,13 @@ export function Welcome() {
             <span key={i} className={`h-2.5 rounded-full transition-all duration-500 ${i === step ? "w-8 bg-teal-500" : i < step ? "w-2.5 bg-teal-300" : "w-2.5 bg-white/80"}`} />
           ))}
         </div>
-        <button onClick={() => router.push("/login")} className="rounded-2xl bg-white/70 px-3 py-1.5 text-sm font-bold text-ink-500">
+        <button
+          onClick={() => {
+            actions.finishOnboarding({ role: "kid", goal: "quran", startHref: "/kids" });
+            router.push("/kids");
+          }}
+          className="rounded-2xl bg-white/70 px-3 py-1.5 text-sm font-bold text-ink-500"
+        >
           تخطّي
         </button>
       </header>
@@ -300,15 +305,24 @@ export function Welcome() {
             {cur === "role" && (
               <>
                 <Guide text="قبل أن نبدأ… أخبرني، من أنت؟" />
-                <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
                   {([
                     ["kid", "أنا طفل", "أريد أن أتعلّم وألعب", { skin: 1, outfit: 0, headwear: "kufi", accessory: "satchel" }],
-                    ["parent", "وليّ أمر", "أريد متابعة أبنائي", { skin: 2, outfit: 1, headwear: "hijab", accessory: "none" }],
-                    ["adult", "متعلّم كبير", "أريد أن أتعلّم لنفسي", { skin: 3, outfit: 3, headwear: "none", accessory: "scarf" }],
+                    ["parent", "بابا أو ماما", "أريد تجهيز رِفق لأبنائي", { skin: 2, outfit: 1, headwear: "hijab", accessory: "none" }],
                   ] as const).map(([k, title, sub, av], i) => (
                     <motion.button
                       key={k}
-                      onClick={() => { setRole(k); setGoal(null); choose(() => go(3)); }}
+                      onClick={() => {
+                        setRole(k);
+                        setPlanIdx(0);
+                        if (k === "parent") {
+                          setGoal(familyGoal);
+                          choose(() => go(4));
+                        } else {
+                          setGoal(null);
+                          choose(() => go(3));
+                        }
+                      }}
                       initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.1, type: "spring", stiffness: 240, damping: 20 }}
@@ -329,7 +343,7 @@ export function Welcome() {
 
             {cur === "goal" && (
               <>
-                <Guide text={role === "kid" ? "أهلًا يا بطل! ماذا تحبّ أن تفعل في رِفق؟" : "جميل! ما هدفك الأهمّ من رِفق الآن؟"} />
+                <Guide text="أهلًا يا بطل! ماذا تحبّ أن تفعل في رِفق؟" />
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
                   {goals.map((g, i) => (
                     <motion.button
@@ -344,7 +358,7 @@ export function Welcome() {
                       <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${g.tone}`}>
                         <g.icon size={28} />
                       </span>
-                      <span className="font-display text-lg font-extrabold">{role === "kid" ? g.kidLabel : g.label}</span>
+                      <span className="font-display text-lg font-extrabold">{g.kidLabel}</span>
                     </motion.button>
                   ))}
                 </div>
@@ -355,16 +369,6 @@ export function Welcome() {
             {cur === "plan" && goal && (
               <>
                 <Guide text={planIdx === 0 ? goal.noor : `${goal.steps[planIdx].title}: ${goal.steps[planIdx].text}`} />
-                {goal.id === "hifz" && (
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-2 rounded-3xl bg-white/80 p-4">
-                    <span className="font-display font-bold">كم آيةً جديدةً تحفظ يوميًا؟</span>
-                    {[1, 2, 3, 5, 10].map((n) => (
-                      <button key={n} onClick={() => setDaily(n)} className={`h-10 min-w-10 rounded-xl px-3 font-display text-lg font-bold transition ${daily === n ? "bg-mint-500 text-white shadow-[0_4px_0_#2fa868]" : "bg-cream-100"}`}>
-                        {toArabicDigits(n)}
-                      </button>
-                    ))}
-                  </div>
-                )}
                 <ol className="relative mt-8 space-y-3">
                   <span className="absolute right-[27px] top-4 bottom-4 w-1 rounded-full bg-white/80" aria-hidden />
                   {goal.steps.map((s, i) => {
@@ -394,7 +398,7 @@ export function Welcome() {
                   })}
                 </ol>
                 <Nav
-                  onBack={() => go(3)}
+                  onBack={() => go(role === "parent" ? 2 : 3)}
                   onNext={() => (planIdx < goal.steps.length - 1 ? setPlanIdx(planIdx + 1) : choose(() => go(5)))}
                   nextLabel={planIdx < goal.steps.length - 1 ? "الخطوة التالية" : "فهمت الخطة!"}
                 />
@@ -407,7 +411,7 @@ export function Welcome() {
                   text={
                     role === "kid"
                       ? "أنت جاهز يا بطل! اطلب من بابا أو ماما أن يسجّلوا الدخول بحساب العائلة، حتى نحفظ نجومك وتقدّمك."
-                      : "أنت جاهز! سجّل الدخول أو أنشئ حسابًا ليُحفظ تقدّمك على كلّ أجهزتك، وسأكون معك في كلّ خطوة."
+                      : "كلّ شيء جاهز! أنشئ حساب العائلة من «ركن الوالدين» ليُحفظ تقدّم أبنائك، أو دعهم يبدؤون الآن."
                   }
                 />
                 <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 14, delay: 0.2 }} className="card-3d mt-8 p-6 text-center">
@@ -417,16 +421,22 @@ export function Welcome() {
                     {role === "kid" ? goal.kidLabel : goal.label}
                   </div>
                   <div className="mt-1 text-ink-500">
-                    خطّةٌ من {toArabicDigits(goal.steps.length)} خطوات{goal.id === "hifz" ? `، و${toArabicDigits(daily)} آيات جديدة يوميًا` : ""}
+                    خطّةٌ من {toArabicDigits(goal.steps.length)} خطوات
                   </div>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    <Button size="lg" onClick={() => finish("/login")}>
-                      تسجيل الدخول
+                  {role === "kid" ? (
+                    <Button size="lg" className="mt-6 w-full" onClick={() => finish("/kids")}>
+                      ابدأ رحلتي
                     </Button>
-                    <Button size="lg" tone="white" onClick={() => finish(role === "kid" ? "/kids" : goal.start)}>
-                      جرّب الآن بدون حساب
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      <Button size="lg" onClick={() => finish("/parents")}>
+                        افتح ركن الوالدين
+                      </Button>
+                      <Button size="lg" tone="white" onClick={() => finish("/kids")}>
+                        افتح عالم الطفل
+                      </Button>
+                    </div>
+                  )}
                 </motion.div>
                 <Nav onBack={() => go(4)} />
               </>

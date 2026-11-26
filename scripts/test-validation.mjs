@@ -88,7 +88,7 @@ t("sanitizeState cleans a hostile state and keeps valid data", () => {
     "focus": {"surah": 2, "ayah": 255}
   }`);
   const s = V.sanitizeState(evil);
-  assert.equal(s.mode, "kids");
+  assert.ok(!("mode" in s), "unknown keys such as an old mode are dropped");
   assert.equal(s.children.length, 2);
   assert.equal(s.activeChildId, "c1");
   const c = s.children[0];
@@ -142,10 +142,12 @@ t("sanitizeState keeps every real progress shape (challenges, adhkar, stories, c
   assert.deepEqual(bad.data.c1.challenges.dhul, { "1447": [] });
 });
 t("sanitizeState is idempotent on clean data", () => {
-  const clean = { version: 1, mode: "adult", activeChildId: "c1", children: [{ id: "c1", name: "صديقي", avatar: { skin: 1, outfit: 0, headwear: "kufi", accessory: "none" }, weeklyGoalMinutes: 60 }], data: { c1: {} }, reminder: { time: "07:00", enabled: true } };
+  const clean = { version: 1, mode: "adult", activeChildId: "c1", children: [{ id: "c1", name: "صديقي", avatar: { skin: 1, outfit: 0, headwear: "kufi", accessory: "none" }, weeklyGoalMinutes: 60 }], data: { c1: {} }, reminder: { time: "07:00", enabled: true }, onboarding: { role: "adult", goal: "hifz", startHref: "/memorize", done: "2026-11-01T10:00:00.000Z" } };
   const a = V.sanitizeState(clean);
   assert.deepEqual(V.sanitizeState(a), a);
-  assert.equal(a.mode, "adult");
+  // Kids-only app: the old adult mode is dropped, and an old "adult" onboarding is read as "parent".
+  assert.ok(!("mode" in a));
+  assert.equal(a.onboarding.role, "parent");
 });
 t("day keys use local time, not UTC (Cairo after midnight)", () => {
   const prev = process.env.TZ;

@@ -113,7 +113,7 @@ function child(v: unknown) {
   };
 }
 
-const ROLES = new Set(["kid", "parent", "adult"]);
+const ROLES = new Set(["kid", "parent", "adult"]); // "adult" (older versions) is read as "parent"
 const safeHref = (h: unknown) => typeof h === "string" && /^\/[a-z0-9/-]{0,40}$/.test(h);
 
 /** Returns a clean state, or null if the input is not recognisable progress data at all. */
@@ -131,7 +131,6 @@ export function sanitizeState<T>(input: unknown): T | null {
   const activeChildId = typeof input.activeChildId === "string" && seen.has(input.activeChildId) ? input.activeChildId : uniq[0].id;
   const out: Obj = {
     version: 1,
-    mode: input.mode === "adult" ? "adult" : "kids",
     activeChildId,
     children: uniq,
     data,
@@ -140,7 +139,7 @@ export function sanitizeState<T>(input: unknown): T | null {
   if (isObj(f) && isVerseKey(`${f.surah}:${f.ayah}`)) out.focus = { surah: Number(f.surah), ayah: Number(f.ayah) };
   const o = input.onboarding;
   if (isObj(o) && ROLES.has(o.role as string) && safeHref(o.startHref))
-    out.onboarding = { role: o.role, goal: isSafeId(o.goal) ? o.goal : "quran", startHref: o.startHref, done: isIsoTime(o.done) ? o.done : new Date().toISOString() };
+    out.onboarding = { role: o.role === "kid" ? "kid" : "parent", goal: isSafeId(o.goal) ? o.goal : "quran", startHref: o.startHref, done: isIsoTime(o.done) ? o.done : new Date().toISOString() };
   const r = input.reminder;
   if (isObj(r) && isValidTime(r.time)) out.reminder = { time: r.time, enabled: r.enabled === true };
   if (input.magdyDuas !== undefined) out.magdyDuas = clampInt(input.magdyDuas, 0, 100_000_000);

@@ -4,7 +4,7 @@
  * replaces all pending Fajr notifications with the current plan.
  */
 import { isNative } from "../native";
-import { getSettings, setDay, updateSettings, type FajrSettings } from "./settings";
+import { getSettings, setDay, updateSettings } from "./settings";
 import { isFajrId, phase, plan, type Planned, type Platform } from "./times";
 
 const ALARM_SOUND = "fajr_alarm.wav";
@@ -16,18 +16,14 @@ const platform = async (): Promise<Platform> => {
   return Capacitor.getPlatform() === "ios" ? "ios" : "android";
 };
 
-function texts(p: Planned, s: FajrSettings): { title: string; body: string } {
-  const kid = s.level === "kid";
+function texts(p: Planned): { title: string; body: string } {
   switch (p.kind) {
     case "ring":
-      return {
-        title: "حان وقت صلاة الفجر",
-        body: kid ? "اصحَ يا بطل! افتح رِفق وحُلّ التحدّي ليسكت المنبّه." : "الصلاة خيرٌ من النوم. افتح رِفق وحُلّ التحدّي ليتوقّف المنبّه.",
-      };
+      return { title: "حان وقت صلاة الفجر", body: "اصحَ يا بطل! افتح رِفق وحُلّ التحدّي ليسكت المنبّه." };
     case "check":
       return { title: "هل ما زلت مستيقظًا؟", body: "اضغط هنا خلال دقيقتين، وإلّا رنّ المنبّه من جديد." };
     case "renew":
-      return { title: "افتح رِفق ليستمرّ منبّه الفجر", body: "افتح التطبيق مرّةً كلّ بضعة أيام ليحسب مواعيد الفجر القادمة." };
+      return { title: "افتح رِفق ليستمرّ منبّه الفجر", body: "افتحوا التطبيق مرّةً كلّ بضعة أيام ليحسب مواعيد الفجر القادمة." };
     case "test":
       return { title: "تجربة منبّه الفجر", body: "هكذا سيوقظك رِفق. افتح التطبيق وحُلّ التحدّي." };
   }
@@ -113,7 +109,7 @@ export function applyPlan(now = new Date()): Promise<number> {
     await LocalNotifications.schedule({
       notifications: list.map((p) => ({
         id: p.id,
-        ...texts(p, s),
+        ...texts(p),
         schedule: { at: new Date(p.at), allowWhileIdle: true },
         channelId: p.kind === "renew" ? undefined : CHANNEL,
         sound: p.kind === "renew" ? undefined : ALARM_SOUND,

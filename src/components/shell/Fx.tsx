@@ -1,11 +1,10 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { getLastTap, installTapEffects, isSoundOn, playSfx, setSound, subscribeSound } from "@/lib/fx";
-import { getState, useProgress } from "@/lib/store";
 
 /** Installs global tap bursts + press bounce. Render once near the root. */
 export function TapEffects() {
-  useEffect(() => installTapEffects(() => getState().mode), []);
+  useEffect(() => installTapEffects(), []);
   return null;
 }
 
@@ -35,8 +34,8 @@ const STAR = "M0 -9 L2.6 -3 L9 -2.8 L4 1.4 L5.6 8 L0 4.4 L-5.6 8 L-4 1.4 L-9 -2.
 
 /**
  * Screen-to-screen transition.
- * Children's mode: the new screen opens as a growing bubble from the exact spot the child
- * tapped, with a soft coloured wave and a sprinkle of stars. Adult mode: a calm fade.
+ * The new screen opens as a growing bubble from the exact spot the child tapped, with a soft
+ * coloured wave and a sprinkle of stars (a calm fade when the system asks for reduced motion).
  * Only clip-path and opacity are animated (no transforms), so fixed bars stay in place.
  */
 /** True once the app has hydrated; transitions only run for in-app navigations after that. */
@@ -52,19 +51,18 @@ export function PageTransition({ children }: { children: ReactNode }) {
 }
 
 function AnimatedEntry({ children }: { children: ReactNode }) {
-  const mode = useProgress((s) => s.mode);
   const ref = useRef<HTMLDivElement>(null);
   const [origin] = useState(() => getLastTap());
   const [overlay, setOverlay] = useState(true);
   const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
-    if (mode === "kids" && !reduced) playSfx("page");
+    if (!reduced) playSfx("page");
     const t = setTimeout(() => setOverlay(false), 900);
     return () => clearTimeout(t);
-  }, [mode, reduced]);
+  }, [reduced]);
 
-  if (reduced || mode === "adult") {
+  if (reduced) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35, ease: "easeOut" }}>
         {children}

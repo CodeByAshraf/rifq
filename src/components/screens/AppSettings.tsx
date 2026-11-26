@@ -44,7 +44,7 @@ export function AppSettings() {
         <div className="relative flex items-center gap-5">
           <MagdyImage size={140} className="hidden shrink-0 drop-shadow-xl sm:block" />
           <div>
-            <h1 className="font-display text-4xl font-extrabold">التذكير وبياناتك</h1>
+            <h1 className="font-display text-4xl font-extrabold">التذكير وبيانات الجهاز</h1>
             <p className="mt-2 max-w-lg text-white/85">اضبط تذكيرًا يوميًا بوِردك، وتحكّم في بيانات رِفق على هاتفك.</p>
           </div>
         </div>

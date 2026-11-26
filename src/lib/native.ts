@@ -9,7 +9,19 @@ export const isNative = (): boolean => Capacitor.isNativePlatform();
 const platform = (): "android" | "ios" | "web" => Capacitor.getPlatform() as "android" | "ios" | "web";
 
 /** Store page shared by «شارك التطبيق» (RIFQ_SHARE_URL at build time; may be empty). */
-export const SHARE_URL = process.env.RIFQ_SHARE_URL ?? "";
+const SHARE_URL = process.env.RIFQ_SHARE_URL ?? "";
+const SHARE_TEXT = "رِفق — تطبيقٌ يُحبّب الأطفال في القرآن الكريم، وهو صدقةٌ جارية عن الوالد مجدي. شاركه، فالدالّ على الخير كفاعله.";
+
+/** Shares the app (system share sheet; clipboard in a browser). Returns "shared" | "copied" | "failed". */
+export async function shareApp(): Promise<"shared" | "copied" | "failed"> {
+  if (await shareText({ title: "رِفق", text: SHARE_TEXT, url: SHARE_URL || undefined })) return "shared";
+  try {
+    await navigator.clipboard.writeText(SHARE_URL ? `${SHARE_TEXT}\n${SHARE_URL}` : SHARE_TEXT);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -46,7 +58,7 @@ export async function saveFile(blob: Blob, fileName: string, title: string): Pro
 }
 
 /** Share text and/or a link. Returns false if nothing could be shared (caller may fall back to copying). */
-export async function shareText(data: { title: string; text: string; url?: string }): Promise<boolean> {
+async function shareText(data: { title: string; text: string; url?: string }): Promise<boolean> {
   if (isNative()) {
     const { Share } = await import("@capacitor/share");
     try {

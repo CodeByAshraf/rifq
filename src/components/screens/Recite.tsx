@@ -6,9 +6,9 @@ import { AyahMark, VerseText } from "@/components/quran/VerseText";
 import { AppShell } from "@/components/shell/AppShell";
 import { Button, Card, Celebrate, SectionTitle } from "@/components/ui";
 import { useRecitation } from "@/lib/player";
-import { KIDS_SURAHS, SURAHS, surahMeta, toArabicDigits, useSurah } from "@/lib/quran";
+import { PICKER_SURAHS, surahMeta, toArabicDigits, useSurah } from "@/lib/quran";
 import { deleteRecording, listRecordings, pickMime, saveRecording, type Recording } from "@/lib/recordings";
-import { actions, useProgress } from "@/lib/store";
+import { actions } from "@/lib/store";
 import { saveFile } from "@/lib/native";
 
 const fmt = (s: number) => `${toArabicDigits(Math.floor(s / 60))}:${toArabicDigits(String(Math.floor(s % 60)).padStart(2, "0"))}`;
@@ -16,7 +16,6 @@ const rangeLabel = (r: { surah: number; from: number; to: number }) =>
   `سورة ${surahMeta(r.surah).name} · ${r.from === r.to ? `الآية ${toArabicDigits(r.from)}` : `الآيات ${toArabicDigits(r.from)}–${toArabicDigits(r.to)}`}`;
 
 export function Recite() {
-  const mode = useProgress((s) => s.mode);
   const [surahId, setSurahId] = useState(1);
   const [from, setFrom] = useState(1);
   const [to, setTo] = useState(7);
@@ -113,7 +112,6 @@ export function Recite() {
     rec.current?.stop();
   }
 
-  const surahOptions = mode === "kids" ? KIDS_SURAHS.map((id) => surahMeta(id)) : SURAHS;
 
   return (
     <AppShell>
@@ -132,7 +130,7 @@ export function Recite() {
         <Card className="p-5 sm:p-7">
           <div className="flex flex-wrap items-center gap-2">
             <select value={surahId} onChange={(e) => setSurahId(+e.target.value)} className="h-11 rounded-2xl bg-cream-100 px-3 font-display font-bold" aria-label="السورة" disabled={state !== "idle"}>
-              {surahOptions.map((s) => (
+              {PICKER_SURAHS.map((s) => (
                 <option key={s.id} value={s.id}>
                   سورة {s.name}
                 </option>

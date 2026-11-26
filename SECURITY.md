@@ -14,10 +14,11 @@ public store pages (privacy, account deletion) are static HTML with no JavaScrip
 | API keys | Only the **public** anon key is in the app, as Supabase is designed: data is protected by RLS, not by hiding that key. The service-role key is never used anywhere in this repo. |
 | Passwords | Supabase Auth hashes them with bcrypt; the app never stores or logs them. Policy: at least 10 characters, letters + digits, not a common password, and not containing the email. |
 | Login | <ul><li>Generic error messages, so no one can tell whether an account exists.</li><li>Exponential lock-out after 3 failures (30 s → 15 min); the "resend code" button counts as an attempt.</li><li>Optional Cloudflare Turnstile CAPTCHA.</li><li>Email confirmation and password reset use a **one-time code** typed in the app (no links).</li><li>"Sign out of all devices" and in-app account deletion.</li></ul> |
-| Input | `src/lib/validation.ts` and `src/lib/state-guard.ts` clean every name, email, time and id, and the whole saved state, before use or upload. The Fajr settings and photo fingerprint are validated the same way (`src/lib/fajr/*`). |
+| Input | `src/lib/validation.ts` and `src/lib/state-guard.ts` clean every name, email, time and id, and the whole saved state, before use or upload. The Fajr settings are validated the same way (`src/lib/fajr/*`). |
 | Database | `supabase/migrations/0002_security.sql`: <ul><li>RLS enabled **and forced** on every table, with owner-only policies.</li><li>`parent_id` and `child_id` cannot be changed.</li><li>CHECK constraints on every value; verse references checked against real surah lengths.</li><li>Limits: at most 10 learners per account, plus an activity flood limit.</li><li>Internal functions are not callable through the API, and nothing is granted to `anon`.</li></ul> `0003_account_deletion.sql`: `delete_my_account()` deletes only the caller. |
 | SQL injection | All queries go through supabase-js → PostgREST, which sends values as bound parameters. The app contains no hand-built SQL. |
-| On-device privacy | Recordings, the Fajr location (rounded to about 1 km) and the sink-photo fingerprint never leave the phone. |
+| On-device privacy | Recordings and the Fajr location (rounded to about 1 km) never leave the phone. |
+| Kids rules | Parents-only screens (account, family, settings, alarm setup, sharing) open only after a parental gate. |
 | Dependencies | `npm audit` = 0 vulnerabilities. |
 
 ## Tests
