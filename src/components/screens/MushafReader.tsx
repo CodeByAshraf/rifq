@@ -176,55 +176,52 @@ function AyahSheet({ sel, onClose, page, player, reciter, setReciter }: { sel: {
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <button onClick={() => setTab("listen")} className={`rounded-xl py-2.5 text-sm font-bold ${tab === "listen" ? "bg-teal-600 text-white" : "bg-cream-100 text-ink-700"}`}>
-            استماع
-          </button>
-          <button onClick={() => setTab("tafsir")} className={`rounded-xl py-2.5 text-sm font-bold ${tab === "tafsir" ? "bg-teal-600 text-white" : "bg-cream-100 text-ink-700"}`}>
-            التفسير
+        {/* Listening: one tap plays (no extra step). */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {player.playing || player.loading ? (
+            <button onClick={player.stop} className="col-span-2 flex h-14 items-center justify-center gap-2 rounded-2xl bg-ink-900 text-base font-bold text-white">
+              <IconPause size={20} /> {player.loading ? "جارٍ التحميل…" : `إيقاف التلاوة (الآية ${toArabicDigits(player.ayah ?? sel.a)})`}
+            </button>
+          ) : (
+            <>
+              <button onClick={() => listen(false)} className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-teal-600 text-base font-bold text-white">
+                <IconPlay size={20} /> استمع للآية
+              </button>
+              <button onClick={() => listen(true)} className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-teal-50 text-base font-bold text-teal-700 ring-1 ring-teal-100">
+                <IconPlay size={18} /> تلاوة من هنا
+              </button>
+            </>
+          )}
+        </div>
+        {player.error && <p className="mt-2 text-center text-xs font-bold text-coral-500">{player.error}</p>}
+        <label className="mt-2 flex items-center justify-between gap-3 text-xs font-bold text-ink-500">
+          القارئ
+          <select value={reciter} onChange={(e) => setReciter(e.target.value)} className="h-9 flex-1 rounded-xl bg-cream-100 px-2 text-sm font-bold text-ink-900">
+            {RECITERS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setTab(tab === "tafsir" ? "listen" : "tafsir")}
+            aria-expanded={tab === "tafsir"}
+            className={`h-11 rounded-xl text-sm font-bold ${tab === "tafsir" ? "bg-ink-900 text-white" : "bg-cream-100 text-ink-700"}`}
+          >
+            التفسير ومعاني الكلمات
           </button>
           <button
             onClick={() => (marked ? reader.clearMark() : reader.setMark({ p: page, s: sel.s, a: sel.a }))}
-            className={`rounded-xl py-2.5 text-sm font-bold ${marked ? "bg-sun-300 text-ink-900" : "bg-cream-100 text-ink-700"}`}
+            className={`h-11 rounded-xl text-sm font-bold ${marked ? "bg-[#e5484d] text-white" : "bg-cream-100 text-ink-700"}`}
           >
-            {marked ? "إزالة العلامة" : "علامة هنا"}
+            {marked ? "إزالة العلامة" : "علامة التوقّف هنا"}
           </button>
         </div>
 
-        {tab === "listen" ? (
-          <div className="mt-4">
-            <label className="block text-xs font-bold text-ink-500">
-              القارئ
-              <select value={reciter} onChange={(e) => setReciter(e.target.value)} className="mt-1 h-11 w-full rounded-xl bg-cream-100 px-3 text-sm font-bold text-ink-900">
-                {RECITERS.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {player.playing ? (
-                <button onClick={player.pause} className="col-span-2 flex h-12 items-center justify-center gap-2 rounded-xl bg-ink-900 font-bold text-white">
-                  <IconPause size={20} /> إيقاف مؤقّت
-                  {player.ayah && <span className="text-sm opacity-80">(الآية {toArabicDigits(player.ayah)})</span>}
-                </button>
-              ) : (
-                <>
-                  <button onClick={() => listen(false)} className="flex h-12 items-center justify-center gap-2 rounded-xl bg-teal-600 font-bold text-white">
-                    <IconPlay size={18} /> الآية فقط
-                  </button>
-                  <button onClick={() => listen(true)} className="flex h-12 items-center justify-center gap-2 rounded-xl bg-teal-50 font-bold text-teal-700">
-                    <IconPlay size={18} /> من هنا للسورة
-                  </button>
-                </>
-              )}
-            </div>
-            {player.loading && <p className="mt-2 text-center text-xs text-ink-500">جارٍ التحميل…</p>}
-            {player.error && <p className="mt-2 text-center text-xs font-bold text-coral-500">{player.error}</p>}
-            <p className="mt-3 text-center text-[11px] text-ink-500">التلاوة من EveryAyah وتحتاج اتصالًا بالإنترنت.</p>
-          </div>
-        ) : (
+        {tab === "tafsir" && (
           <div className="mt-4 space-y-3 text-right">
             {error && <p className="text-sm font-bold text-coral-500">تعذّر تحميل التفسير.</p>}
             {!tafsir && !error && <div className="h-20 animate-pulse rounded-2xl bg-cream-100" />}
@@ -250,6 +247,7 @@ function AyahSheet({ sel, onClose, page, player, reciter, setReciter }: { sel: {
             )}
           </div>
         )}
+        <p className="mt-3 text-center text-[11px] text-ink-500">التلاوة من EveryAyah وتحتاج اتصالًا بالإنترنت.</p>
       </motion.div>
     </motion.div>
   );
