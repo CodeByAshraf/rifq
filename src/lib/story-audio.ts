@@ -1,116 +1,175 @@
 /**
- * Plays a story's narration: AI-voice clips for the retelling, human recitation for verses.
- * Files are streamed when played (the app stays small); nothing is uploaded or tracked.
- * Narration files are published as assets of the GitHub release "story-audio"
- * (.github/workflows/story-audio.yml).
+ * Plays a story's narration.
+ * - The retelling: a recorded voice file if one was published (release "story-audio"), otherwise
+ *   the phone's own text-to-speech voice (free, offline). Recorded files win automatically as
+ *   soon as they exist.
+ * - Quran verses: always human recitation from EveryAyah. Never text-to-speech.
+ * Nothing is uploaded or tracked.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { TextToSpeech } from "@capacitor-community/text-to-speech";
 import { audioUrl, RECITERS } from "@/lib/quran";
 import type { Clip } from "@/lib/story-clips";
 
 const STORY_AUDIO_BASE = "https://github.com/CodeByAshraf/rifq/releases/download/story-audio/";
 
-const urlOf = (c: Clip) => (c.kind === "voice" ? STORY_AUDIO_BASE + c.file : audioUrl(c.surah, c.ayah, RECITERS[1]));
+/** Once a recorded file is missing, use the phone voice for the rest of the session (no waiting on 404s). */
+let recordedMissing = false;
 
 export type NarratorState = "idle" | "loading" | "playing" | "paused" | "error";
+
+/** Is an Arabic voice installed on this phone? (null = unknown) */
+export async function arabicVoiceReady(): Promise<boolean | null> {
+  try {
+    return (await TextToSpeech.isLanguageSupported({ lang: "ar" })).supported;
+  } catch {
+    return null;
+  }
+}
+
+/** Opens the system screen to install a voice (Android). */
+export const installVoice = () => TextToSpeech.openInstall().catch(() => {});
+
+const stopVoice = () => TextToSpeech.stop().catch(() => {});
 
 /**
  * A queue player. `onClip` reports each clip as it starts (to turn pages), `onEnd` when the
  * queue is done. One <audio> element, released on unmount.
  */
 export function useNarrator(opts: { onClip?: (c: Clip, i: number) => void; onEnd?: () => void } = {}) {
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const queue = useRef<Clip[]>([]);
-  const index = useRef(0);
   const cb = useRef(opts);
   cb.current = opts;
   const [state, setState] = useState<NarratorState>("idle");
   const [clip, setClip] = useState<Clip | null>(null);
 
-  const playAt = useCallback((i: number) => {
-    const a = audio.current;
-    const c = queue.current[i];
-    if (!a) return;
-    if (!c) {
-      setState("idle");
-      setClip(null);
-      cb.current.onEnd?.();
-      return;
-    }
-    index.current = i;
-    setClip(c);
-    setState("loading");
-    cb.current.onClip?.(c, i);
-    a.src = urlOf(c);
-    a.play().catch((e: unknown) => {
-      if ((e as { name?: string })?.name !== "AbortError") setState("error");
-    });
-  }, []);
+  // One controller for the life of the component (no stale closures between callbacks).
+  const ctl = useRef<ReturnType<typeof makeController> | null>(null);
+  if (!ctl.current) ctl.current = makeController();
 
-  useEffect(() => {
-    const a = new Audio();
-    a.preload = "auto";
-    audio.current = a;
-    const ended = () => playAt(index.current + 1);
-    const playing = () => setState("playing");
-    const failed = () => setState("error");
-    a.addEventListener("ended", ended);
-    a.addEventListener("playing", playing);
-    a.addEventListener("error", failed);
-    return () => {
-      a.pause();
-      a.removeAttribute("src");
-      a.removeEventListener("ended", ended);
-      a.removeEventListener("playing", playing);
-      a.removeEventListener("error", failed);
-      audio.current = null;
+  function makeController() {
+    const audio = typeof Audio !== "undefined" ? new Audio() : null;
+    if (audio) audio.preload = "auto";
+    let queue: Clip[] = [];
+    let index = 0;
+    let run = 0; // bumps on start/stop/pause: late callbacks of an old run are ignored
+    let viaVoice = false; // the current clip is being read by the phone voice
+
+    const playAt = (i: number) => {
+      const c = queue[i];
+      if (!audio) return;
+      if (!c) {
+        setState("idle");
+        setClip(null);
+        cb.current.onEnd?.();
+        return;
+      }
+      index = i;
+      setClip(c);
+      cb.current.onClip?.(c, i);
+      if (c.kind === "voice" && recordedMissing) return speak(i);
+      viaVoice = false;
+      setState("loading");
+      audio.src = c.kind === "voice" ? STORY_AUDIO_BASE + c.file : audioUrl(c.surah, c.ayah, RECITERS[1]);
+      audio.play().catch((e: unknown) => {
+        if ((e as { name?: string })?.name !== "AbortError") failed();
+      });
     };
-  }, [playAt]);
 
-  const start = useCallback(
-    (clips: Clip[]) => {
-      queue.current = clips;
-      playAt(0);
-    },
-    [playAt],
-  );
-  const pause = useCallback(() => {
-    audio.current?.pause();
-    setState((s) => (s === "playing" || s === "loading" ? "paused" : s));
-  }, []);
-  const resume = useCallback(() => {
-    if (!queue.current.length) return;
-    audio.current
-      ?.play()
-      .then(() => setState("playing"))
-      .catch(() => setState("error"));
-  }, []);
-  const stop = useCallback(() => {
-    audio.current?.pause();
-    queue.current = [];
-    setState("idle");
-    setClip(null);
-  }, []);
-  /** Gently lowers the volume, then stops (sleep timer). */
-  const fadeOut = useCallback(
-    (ms = 8000) => {
-      const a = audio.current;
-      if (!a) return stop();
-      const from = a.volume;
-      const t0 = Date.now();
-      const step = () => {
-        const k = Math.min(1, (Date.now() - t0) / ms);
-        a.volume = from * (1 - k);
-        if (k < 1) setTimeout(step, 200);
-        else {
-          stop();
-          a.volume = from;
-        }
-      };
-      step();
-    },
-    [stop],
-  );
+    /** Reads a voice clip with the phone's voice, then moves on. */
+    const speak = (i: number) => {
+      const c = queue[i];
+      if (c?.kind !== "voice") return;
+      const mine = ++run;
+      viaVoice = true;
+      setState("playing");
+      TextToSpeech.speak({ text: c.text, lang: "ar", rate: 0.85, pitch: 1.05, category: "playback" })
+        .then(() => {
+          if (run === mine) playAt(i + 1);
+        })
+        .catch(() => {
+          if (run === mine) setState("error");
+        });
+    };
 
-  return { start, pause, resume, stop, fadeOut, state, clip };
+    /** A file failed: voice clips fall back to the phone voice; a verse that cannot load is an error. */
+    const failed = () => {
+      if (queue[index]?.kind === "voice") {
+        recordedMissing = true;
+        speak(index);
+      } else setState("error");
+    };
+
+    audio?.addEventListener("ended", () => playAt(index + 1));
+    audio?.addEventListener("playing", () => setState("playing"));
+    audio?.addEventListener("error", () => {
+      if (audio.getAttribute("src")) failed();
+    });
+
+    const halt = () => {
+      run++;
+      audio?.pause();
+      if (viaVoice) void stopVoice();
+    };
+
+    return {
+      start(clips: Clip[]) {
+        halt();
+        queue = clips;
+        playAt(0);
+      },
+      pause() {
+        halt();
+        setState((s) => (s === "playing" || s === "loading" ? "paused" : s));
+      },
+      resume() {
+        if (!queue.length) return;
+        // The phone voice cannot resume mid-sentence: the current page is read again.
+        if (viaVoice) return playAt(index);
+        audio
+          ?.play()
+          .then(() => setState("playing"))
+          .catch(() => setState("error"));
+      },
+      stop() {
+        halt();
+        queue = [];
+        setState("idle");
+        setClip(null);
+      },
+      /** Gently lowers the volume, then stops (sleep timer). */
+      fadeOut(ms = 8000) {
+        if (!audio || viaVoice) return this.stop();
+        const from = audio.volume;
+        const t0 = Date.now();
+        const step = () => {
+          const k = Math.min(1, (Date.now() - t0) / ms);
+          audio.volume = from * (1 - k);
+          if (k < 1) setTimeout(step, 200);
+          else {
+            this.stop();
+            audio.volume = from;
+          }
+        };
+        step();
+      },
+      dispose() {
+        halt();
+        audio?.removeAttribute("src");
+        void stopVoice();
+      },
+    };
+  }
+
+  useEffect(() => () => ctl.current?.dispose(), []);
+
+  const c = ctl.current;
+  return {
+    start: (clips: Clip[]) => c.start(clips),
+    pause: () => c.pause(),
+    resume: () => c.resume(),
+    stop: () => c.stop(),
+    fadeOut: (ms?: number) => c.fadeOut(ms),
+    state,
+    clip,
+  };
 }

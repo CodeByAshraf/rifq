@@ -3,8 +3,8 @@ import { IconHeadphones, IconPause, IconPlay, IconSparkle } from "@/components/a
 import { AppShell } from "@/components/shell/AppShell";
 import { STORIES, storyOfTheDay, type Story } from "@/data/stories";
 import { surahMeta, toArabicDigits } from "@/lib/quran";
-import { useNarrator } from "@/lib/story-audio";
-import { storyPlan, type Clip } from "@/lib/story-clips";
+import { arabicVoiceReady, installVoice, useNarrator } from "@/lib/story-audio";
+import { lineClip, storyPlan, type Clip } from "@/lib/story-clips";
 
 /** Sleep timer: a number of stories, or minutes (then the voice fades out). */
 const TIMERS = [
@@ -23,7 +23,7 @@ function nightQueue(first: Story, count: number): { clips: Clip[]; storyOf: numb
   for (let k = 0; k < count; k++) {
     const si = (start + k) % STORIES.length;
     if (k > 0) {
-      clips.push({ kind: "voice", file: "line-next.mp3" });
+      clips.push(lineClip("line-next"));
       storyOf.push(si);
     }
     for (const c of storyPlan(STORIES[si])) {
@@ -31,7 +31,7 @@ function nightQueue(first: Story, count: number): { clips: Clip[]; storyOf: numb
       storyOf.push(si);
     }
   }
-  clips.push({ kind: "voice", file: "line-goodnight.mp3" });
+  clips.push(lineClip("line-goodnight"));
   storyOf.push(storyOf.at(-1) ?? start);
   return { clips, storyOf };
 }
@@ -58,6 +58,9 @@ export function Bedtime() {
   const active = narrator.state !== "idle" && narrator.state !== "error";
 
   useEffect(() => () => void (stopAt.current && clearTimeout(stopAt.current)), []);
+  // The phone voice needs an Arabic voice installed (Android: Google Speech Services).
+  const [voiceOk, setVoiceOk] = useState<boolean | null>(null);
+  useEffect(() => void arabicVoiceReady().then(setVoiceOk), []);
 
   const begin = () => {
     const t = TIMERS.find((x) => x.id === timer)!;
@@ -147,12 +150,20 @@ export function Bedtime() {
               >
                 <IconHeadphones size={28} /> ابدأ الحكاية
               </button>
+              {voiceOk === false && (
+                <div className="mt-3 rounded-2xl bg-white/10 p-4 text-center text-sm">
+                  <p className="font-bold">ليحكي الهاتف القصص يحتاج إلى «الصوت العربي».</p>
+                  <button onClick={installVoice} className="mt-2 rounded-xl bg-white px-4 py-2 font-bold text-[#13224a]">
+                    تنزيل الصوت العربي
+                  </button>
+                </div>
+              )}
               {narrator.state === "error" && (
-                <p className="mt-3 text-center text-sm font-bold text-coral-400">الحكايات الصوتية غير متاحة الآن. تأكّد من الاتصال بالإنترنت وحاول مرة أخرى.</p>
+                <p className="mt-3 text-center text-sm font-bold text-coral-400">تعذّر التشغيل الآن. تأكّد من الاتصال بالإنترنت (للآيات) ومن وجود الصوت العربي في الهاتف.</p>
               )}
               <p className="mt-6 flex items-start gap-2 text-sm text-white/55">
                 <IconSparkle size={16} className="mt-0.5 shrink-0" />
-                يحكي القصةَ راوٍ بصوتٍ مولَّد، أمّا آيات القرآن فبصوت الشيخ محمود خليل الحصري. خفّف إضاءة الشاشة، وضع الهاتف بعيدًا عن وسادة طفلك.
+                يحكي القصةَ صوتُ الهاتف، أمّا آيات القرآن فبتلاوة الشيخ محمود خليل الحصري. خفّف إضاءة الشاشة، وضع الهاتف بعيدًا عن وسادة طفلك.
               </p>
             </>
           )}

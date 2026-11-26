@@ -143,7 +143,9 @@ testing first.
 
 ## Story narration («حكايات قبل النوم»)
 
-- The retelling of each story is read by an AI voice (ElevenLabs). Quran verses inside a story are
+- The retelling is read by the phone's own text-to-speech voice (@capacitor-community/text-to-speech,
+  free, offline). If recorded files are published (below), they are played instead, automatically.
+- Optional recorded voice: an AI voice (ElevenLabs) or human recordings named like the clips. Quran verses inside a story are
   never synthesized: they play from EveryAyah (Mahmoud Khalil Al-Husary).
 - Recording: Actions → **story-audio** → Run workflow. It needs the secret `ELEVENLABS_API_KEY` and the
   variable `NARRATOR_VOICE_ID`. Leave "only" empty for all stories, or give ids (e.g. `nuh-ark`) to try
