@@ -7,12 +7,14 @@ import { useRecitation } from "@/lib/player";
 import { RECITERS, surahMeta, SURAHS, toArabicDigits } from "@/lib/quran";
 import { TAFSIR_SOURCE, MEANINGS_SOURCE, useTafsir } from "@/lib/tafsir";
 
-/** Widest common printed line, in em of the KFGQPC font (measured over all 604 pages: 99% of
- *  lines fit; the few wider lines shrink themselves slightly). */
-const LINE_EM = 20.4;
+/** Line width, in em of the KFGQPC font, that 96% of the 604 pages' lines fit at the minimum word
+ *  gap (measured over the whole Mushaf). The few wider lines are narrowed horizontally to fit, the
+ *  way the printed Mushaf tightens a long line, so every line keeps the same size and height. */
+const LINE_EM = 18;
 /** Minimum row height in em; rows grow to fill the page height like a printed page. */
-const MIN_ROW = 1.75;
+const MIN_ROW = 1.7;
 const ROW = "var(--row)";
+const GOLD = "#a8814f";
 
 type Sel = { s: number; a: number } | null;
 
@@ -24,32 +26,73 @@ const Chevron = ({ dir, size = 18 }: { dir: "left" | "right"; size?: number }) =
 
 // ---------------------------------------------------------------- page rendering
 
-/** One printed line, justified edge to edge like the printed Mushaf. */
-const Line = memo(function Line({ row, sel, playing, onPick, center }: { row: Extract<Row, { l: unknown }>; sel: Sel; playing: Sel; onPick: (s: number, a: number) => void; center: boolean }) {
+type Pick = (s: number, a: number) => void;
+
+const TONES = { sel: "rgba(245, 181, 46, 0.32)", mark: "rgba(229, 72, 77, 0.17)", play: "rgba(31, 179, 166, 0.16)" } as const;
+type Band = { left: number; width: number; color: string };
+
+/** One printed line, justified edge to edge like the printed Mushaf. A highlighted āyah gets one
+ *  continuous soft band behind its words (selected: gold, bookmark: red, being recited: teal). */
+const Line = memo(function Line({ row, sel, mark, playing, onPick, center, fit }: { row: Extract<Row, { l: unknown }>; sel: Sel; mark: Sel; playing: Sel; onPick: Pick; center: boolean; fit: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [squeeze, setSqueeze] = useState(1);
+  const [bands, setBands] = useState<Band[]>([]);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || center) return;
+    setSqueeze(1);
+    const id = requestAnimationFrame(() => {
+      const parent = el.parentElement;
+      if (parent && el.scrollWidth > parent.clientWidth + 1) setSqueeze(parent.clientWidth / el.scrollWidth);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [row, center, fit]);
+
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    setScale(1);
-    requestAnimationFrame(() => {
-      if (el.scrollWidth > el.clientWidth + 1) setScale(el.clientWidth / el.scrollWidth);
-    });
-  }, [row]);
+    const out: Band[] = [];
+    // Later entries win: recitation, then bookmark, then the current selection on top.
+    for (const [x, color] of [
+      [playing, TONES.play],
+      [mark, TONES.mark],
+      [sel, TONES.sel],
+    ] as const) {
+      if (!x) continue;
+      const spans = [...el.querySelectorAll<HTMLElement>(`[data-k="${x.s}:${x.a}"]`)];
+      if (!spans.length) continue;
+      const left = Math.min(...spans.map((n) => n.offsetLeft));
+      const right = Math.max(...spans.map((n) => n.offsetLeft + n.offsetWidth));
+      // Kept inside the line so the band never makes the line wider (that would squeeze it).
+      const l = Math.max(0, left - 3);
+      out.push({ left: l, width: Math.min(el.offsetWidth, right + 3) - l, color });
+    }
+    setBands(out);
+  }, [row, sel, mark, playing, fit, squeeze]);
+
   return (
-    <div ref={ref} className={`flex whitespace-nowrap ${center ? "justify-center gap-[0.35em]" : "justify-between gap-[0.2em]"}`} style={{ fontSize: `${scale}em`, height: ROW, lineHeight: ROW }}>
+    <div
+      ref={ref}
+      className={`relative flex whitespace-nowrap ${center ? "justify-center gap-[0.3em]" : "justify-between gap-[0.1em]"}`}
+      style={{ height: ROW, lineHeight: ROW, ...(squeeze < 1 ? { width: `${100 / squeeze}%`, transform: `scaleX(${squeeze})`, transformOrigin: "right" } : null) }}
+    >
+      {bands.map((b, i) => (
+        <span key={`band${i}`} aria-hidden className="pointer-events-none absolute rounded-[0.35em]" style={{ left: b.left, width: b.width, top: "14%", bottom: "6%", background: b.color }} />
+      ))}
       {row.l.flatMap(([s, a, text, end]) => {
-        const on = sel?.s === s && sel.a === a;
-        const live = playing?.s === s && playing.a === a;
-        const cls = `cursor-pointer rounded-md transition-colors ${on ? "bg-sun-300/45" : live ? "bg-teal-100" : ""}`;
+        const pick = (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onPick(s, a);
+        };
         const words = text.split(" ").map((w, i) => (
-          <span key={`${s}:${a}:${i}`} className={cls} onClick={() => onPick(s, a)}>
+          <span key={`${s}:${a}:${i}`} data-k={`${s}:${a}`} className="relative cursor-pointer" onClick={pick}>
             {w}
           </span>
         ));
         if (end)
           words.push(
-            <span key={`${s}:${a}:end`} className={`${cls} text-teal-700`} onClick={() => onPick(s, a)} aria-label={`نهاية الآية ${a}`}>
+            <span key={`${s}:${a}:end`} data-k={`${s}:${a}`} className="relative cursor-pointer" style={{ color: GOLD }} onClick={pick} aria-label={`نهاية الآية ${a}`}>
               {ayahEnd(a)}
             </span>,
           );
@@ -59,7 +102,7 @@ const Line = memo(function Line({ row, sel, playing, onPick, center }: { row: Ex
   );
 });
 
-function PageView({ page, sel, playing, onPick }: { page: MushafPage; sel: Sel; playing: Sel; onPick: (s: number, a: number) => void }) {
+function PageView({ page, sel, mark, playing, onPick, fit }: { page: MushafPage; sel: Sel; mark: Sel; playing: Sel; onPick: Pick; fit: string }) {
   const opening = page.p <= 2;
   return (
     <div className={opening ? "flex h-full flex-col justify-center" : ""}>
@@ -67,7 +110,7 @@ function PageView({ page, sel, playing, onPick }: { page: MushafPage; sel: Sel; 
         if ("h" in r)
           return (
             <div key={i} className="flex items-center justify-center" style={{ height: ROW }}>
-              <div className="flex h-[1.6em] w-full items-center justify-center rounded-full border-2 border-teal-600/50 bg-gradient-to-l from-teal-50 via-white to-teal-50 font-display text-[0.8em] font-extrabold text-teal-700">
+              <div className="relative flex h-[1.55em] w-full items-center justify-center rounded-[0.5em] border border-[#c9a974] bg-[#f6ecd8] font-display text-[0.72em] font-extrabold text-[#7a5a2e] shadow-[inset_0_0_0_3px_#fdf8ef,inset_0_0_0_4px_#e3cfa6]">
                 سورة {surahMeta(r.h).name}
               </div>
             </div>
@@ -78,7 +121,7 @@ function PageView({ page, sel, playing, onPick }: { page: MushafPage; sel: Sel; 
               {MUSHAF_INDEX.basmalah}
             </div>
           );
-        return <Line key={i} row={r} sel={sel} playing={playing} onPick={onPick} center={opening} />;
+        return <Line key={i} row={r} sel={sel} mark={mark} playing={playing} onPick={onPick} center={opening} fit={fit} />;
       })}
     </div>
   );
@@ -333,6 +376,18 @@ export function MushafReader() {
   const { page, error } = useMushafPage(p);
   const box = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState({ fs: 16, row: 32 });
+  // Lines are measured with the real font: wait for it (it loads only when the Mushaf opens).
+  const [fontReady, setFontReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    document.fonts
+      .load('20px "KFGQPC Hafs"', "بِسۡمِ")
+      .catch(() => null)
+      .then(() => alive && setFontReady(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const go = useCallback((n: number) => {
     const t = clampPage(n);
@@ -384,90 +439,142 @@ export function MushafReader() {
   const surah = surahMeta(surahOfPage(p));
   const onPick = useCallback((s: number, a: number) => setSel({ s, a }), []);
   const markedHere = mark?.p === p;
+  const markSel: Sel = mark ? { s: mark.s, a: mark.a } : null;
+  const juz = page?.j || juzOfPage(p);
+
+  // Immersive page: the bars show on open, hide after a moment, and come back with a tap on the page.
+  const [chrome, setChrome] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setChrome(false), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  const toggleMark = () =>
+    markedHere ? reader.clearMark() : reader.setMark({ p, s: surah.id, a: page?.rows.find((r): r is Extract<Row, { l: unknown }> => "l" in r)?.l[0][1] ?? 1 });
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-[#f7f1e3]">
-      {/* top bar */}
-      <header className="flex items-center gap-2 border-b border-[#e6dcc3] bg-[#fbf8f2] px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))]">
-        <Link href="/adults" className="grid h-10 w-10 place-items-center rounded-full text-ink-700 hover:bg-white" aria-label="رجوع">
-          <Chevron dir="right" size={22} />
-        </Link>
-        <button onClick={() => setIndex(true)} className="flex min-w-0 flex-1 flex-col items-start rounded-xl px-2 py-1 text-right hover:bg-white" aria-label="الفهرس">
-          <span className="truncate font-display text-base font-extrabold text-ink-900">سورة {surah.name}</span>
-          <span className="text-xs text-ink-500">الجزء {toArabicDigits(page?.j || juzOfPage(p))} · الفهرس</span>
-        </button>
-        <button
-          onClick={() => (markedHere ? reader.clearMark() : reader.setMark({ p, s: surah.id, a: page?.rows.find((r): r is Extract<Row, { l: unknown }> => "l" in r)?.l[0][1] ?? 1 }))}
-          className={`flex h-10 items-center gap-1 rounded-full px-3 text-sm font-bold ${markedHere ? "bg-sun-300 text-ink-900" : "bg-white text-ink-700 ring-1 ring-[#e6dcc3]"}`}
-          aria-pressed={markedHere}
-        >
-          <svg width="16" height="18" viewBox="0 0 16 18" aria-hidden>
-            <path d="M2 1h12v16l-6-4-6 4z" fill={markedHere ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-          </svg>
-          {markedHere ? "العلامة هنا" : "علامة"}
-        </button>
-      </header>
+    <div className="fixed inset-0 overflow-hidden bg-[#fdf8ef]">
+      {/* the page */}
+      <div
+        className="flex h-full flex-col px-[3.5vw] pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-[calc(0.6rem+env(safe-area-inset-top))]"
+        onClick={() => setChrome((c) => !c)}
+      >
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-1 pb-1 font-display text-[13px] font-bold" style={{ color: GOLD }}>
+          <span>سورة {surah.name}</span>
+          {markedHere && (
+            <svg width="14" height="18" viewBox="0 0 16 18" aria-label="علامة التوقّف في هذه الصفحة" className="text-[#e5484d]">
+              <path d="M2 1h12v16l-6-4-6 4z" fill="currentColor" />
+            </svg>
+          )}
+          <span>الجزء {toArabicDigits(juz)}</span>
+        </div>
 
-      {/* page */}
-      <div className="relative min-h-0 flex-1 overflow-hidden px-3 py-3">
-        <div className="mx-auto flex h-full max-w-3xl flex-col rounded-[0.6rem] border-[3px] border-double border-[#c9b98f] bg-[#fffdf7] px-3 py-2 shadow-[0_10px_30px_rgba(80,60,20,0.08)]">
-          <div ref={box} className="relative min-h-0 flex-1 overflow-hidden" style={{ fontFamily: '"KFGQPC Hafs", var(--font-quran)', fontSize: fit.fs, ["--row" as string]: `${fit.row}px` }} dir="rtl">
-            <AnimatePresence initial={false} custom={dir} mode="popLayout">
-              {page ? (
-                <motion.div
-                  key={page.p}
-                  custom={dir}
-                  className="absolute inset-0 text-ink-900"
-                  initial={{ x: dir > 0 ? "-35%" : "35%", opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: dir > 0 ? "35%" : "-35%", opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.25}
-                  onDragEnd={(_, info) => {
-                    // Arabic Mushaf: the next page is to the left, so swipe right to move forward.
-                    if (info.offset.x > 70) go(p + 1);
-                    else if (info.offset.x < -70) go(p - 1);
-                  }}
-                >
-                  <PageView page={page} sel={sel} playing={playing} onPick={onPick} />
-                </motion.div>
-              ) : error ? (
-                <p key="err" className="absolute inset-0 grid place-items-center font-display text-base text-coral-500">
-                  تعذّر فتح الصفحة.
-                </p>
-              ) : null}
-            </AnimatePresence>
-          </div>
+        <div ref={box} className="relative mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-hidden" style={{ fontFamily: '"KFGQPC Hafs", var(--font-quran)', fontSize: fit.fs, ["--row" as string]: `${fit.row}px` }} dir="rtl">
+          <AnimatePresence initial={false} custom={dir} mode="popLayout">
+            {page ? (
+              <motion.div
+                key={page.p}
+                custom={dir}
+                className="absolute inset-0 text-[#1c1c1c]"
+                initial={{ x: dir > 0 ? "-30%" : "30%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: dir > 0 ? "30%" : "-30%", opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.25}
+                onDragEnd={(_, info) => {
+                  // Arabic Mushaf: the next page is to the left, so swipe right to move forward.
+                  if (info.offset.x > 70) go(p + 1);
+                  else if (info.offset.x < -70) go(p - 1);
+                }}
+              >
+                <PageView page={page} sel={sel} mark={markSel} playing={playing} onPick={onPick} fit={`${fit.fs}:${fontReady}`} />
+              </motion.div>
+            ) : error ? (
+              <p key="err" className="absolute inset-0 grid place-items-center font-display text-base text-coral-500">
+                تعذّر فتح الصفحة.
+              </p>
+            ) : null}
+          </AnimatePresence>
+        </div>
+
+        <div className="relative mx-auto mt-1 grid h-[26px] w-[96px] place-items-center">
+          <svg width="96" height="26" viewBox="0 0 96 26" aria-hidden className="absolute inset-0">
+            <path d="M14 3h68a10 10 0 0 1 0 20H14a10 10 0 0 1 0-20z" fill="#f6ecd8" stroke="#c9a974" />
+            <path d="M3 13c4-6 8-6 11 0-3 6-7 6-11 0zM93 13c-4-6-8-6-11 0 3 6 7 6 11 0z" fill="#e3cfa6" stroke="#c9a974" strokeWidth=".8" />
+          </svg>
+          <span className="relative font-display text-[15px] font-extrabold leading-none text-[#7a5a2e]">{toArabicDigits(p)}</span>
         </div>
       </div>
 
-      {(player.playing || player.loading) && !sel && (
-        <div className="flex items-center justify-between gap-3 border-t border-[#e6dcc3] bg-teal-50 px-4 py-2 text-sm">
-          <span className="font-bold text-teal-700">
-            {player.loading ? "جارٍ التحميل…" : `تُتلى الآن: سورة ${surahMeta(playingSurah ?? 1).name}، الآية ${toArabicDigits(player.ayah ?? 1)}`}
-          </span>
-          <button onClick={player.stop} className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 font-bold text-ink-700 ring-1 ring-[#e6dcc3]">
-            <IconPause size={16} /> إيقاف
-          </button>
-        </div>
-      )}
-      {player.error && !sel && <div className="bg-coral-100 px-4 py-2 text-center text-xs font-bold text-coral-500">{player.error}</div>}
-
-      {/* bottom bar */}
-      <footer className="flex items-center justify-between gap-3 border-t border-[#e6dcc3] bg-[#fbf8f2] px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
-        <button onClick={() => go(p - 1)} disabled={p <= 1} className="flex h-11 items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-ink-700 ring-1 ring-[#e6dcc3] disabled:opacity-40">
-          <Chevron dir="right" /> السابقة
-        </button>
-        <button onClick={() => setIndex(true)} className="flex items-center gap-1.5 rounded-full px-3 py-2 font-display font-extrabold text-ink-900" aria-label="انتقال إلى صفحة">
-          <IconBook size={16} className="text-teal-700" />
-          {toArabicDigits(p)}
-        </button>
-        <button onClick={() => go(p + 1)} disabled={p >= PAGES} className="flex h-11 items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-ink-700 ring-1 ring-[#e6dcc3] disabled:opacity-40">
-          التالية <Chevron dir="left" />
-        </button>
-      </footer>
+      {/* bars: over the page, shown on demand */}
+      <AnimatePresence>
+        {chrome && (
+          <motion.header
+            key="top"
+            className="absolute inset-x-0 top-0 z-20 flex items-center gap-2 border-b border-[#e6dcc3] bg-[#fbf8f2]/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-sm backdrop-blur"
+            initial={{ y: "-100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "-100%" }}
+            transition={{ duration: 0.18 }}
+          >
+            <Link href="/adults" className="grid h-10 w-10 place-items-center rounded-full text-ink-700 hover:bg-white" aria-label="رجوع">
+              <Chevron dir="right" size={22} />
+            </Link>
+            <button onClick={() => setIndex(true)} className="flex min-w-0 flex-1 flex-col items-start rounded-xl px-2 py-1 text-right hover:bg-white" aria-label="الفهرس">
+              <span className="truncate font-display text-base font-extrabold text-ink-900">سورة {surah.name}</span>
+              <span className="text-xs text-ink-500">الجزء {toArabicDigits(juz)} · الفهرس</span>
+            </button>
+            <button
+              onClick={toggleMark}
+              className={`flex h-10 items-center gap-1 rounded-full px-3 text-sm font-bold ${markedHere ? "bg-[#e5484d] text-white" : "bg-white text-ink-700 ring-1 ring-[#e6dcc3]"}`}
+              aria-pressed={markedHere}
+            >
+              <svg width="16" height="18" viewBox="0 0 16 18" aria-hidden>
+                <path d="M2 1h12v16l-6-4-6 4z" fill={markedHere ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              </svg>
+              {markedHere ? "العلامة هنا" : "علامة"}
+            </button>
+          </motion.header>
+        )}
+        {(chrome || player.playing || player.loading || player.error) && (
+          <motion.footer
+            key="bottom"
+            className="absolute inset-x-0 bottom-0 z-20 border-t border-[#e6dcc3] bg-[#fbf8f2]/95 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgba(0,0,0,0.04)] backdrop-blur"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ duration: 0.18 }}
+          >
+            {(player.playing || player.loading) && !sel && (
+              <div className="flex items-center justify-between gap-3 bg-teal-50 px-4 py-2 text-sm">
+                <span className="font-bold text-teal-700">
+                  {player.loading ? "جارٍ التحميل…" : `تُتلى الآن: سورة ${surahMeta(playingSurah ?? 1).name}، الآية ${toArabicDigits(player.ayah ?? 1)}`}
+                </span>
+                <button onClick={player.stop} className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 font-bold text-ink-700 ring-1 ring-[#e6dcc3]">
+                  <IconPause size={16} /> إيقاف
+                </button>
+              </div>
+            )}
+            {player.error && !sel && <div className="bg-coral-100 px-4 py-2 text-center text-xs font-bold text-coral-500">{player.error}</div>}
+            {chrome && (
+              <div className="flex items-center justify-between gap-3 px-4 pt-2">
+                <button onClick={() => go(p - 1)} disabled={p <= 1} className="flex h-11 items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-ink-700 ring-1 ring-[#e6dcc3] disabled:opacity-40">
+                  <Chevron dir="right" /> السابقة
+                </button>
+                <button onClick={() => setIndex(true)} className="flex items-center gap-1.5 rounded-full px-3 py-2 font-display font-extrabold text-ink-900" aria-label="انتقال إلى صفحة">
+                  <IconBook size={16} className="text-teal-700" />
+                  {toArabicDigits(p)}
+                </button>
+                <button onClick={() => go(p + 1)} disabled={p >= PAGES} className="flex h-11 items-center gap-1 rounded-full bg-white px-4 text-sm font-bold text-ink-700 ring-1 ring-[#e6dcc3] disabled:opacity-40">
+                  التالية <Chevron dir="left" />
+                </button>
+              </div>
+            )}
+          </motion.footer>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {sel && <AyahSheet key="ayah" sel={sel} page={p} onClose={() => setSel(null)} player={player} reciter={reciter} setReciter={setReciter} />}
