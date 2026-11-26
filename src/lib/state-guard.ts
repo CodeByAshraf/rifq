@@ -14,26 +14,28 @@ const CHILD_ID = /^[cr][a-z0-9]{1,20}$/;
 const MAX_CHILDREN = 10;
 
 function strArray(v: unknown, ok: (x: unknown) => boolean, max: number): string[] {
-  return Array.isArray(v) ? (v.filter(ok) as string[]).slice(0, max) : [];
+  return Array.isArray(v) ? (v.filter(ok) as string[]).slice(-max) : []; // lists are appended: keep the newest
 }
 
 function intList(v: unknown[], min: number, max: number): number[] {
   return [...new Set(v.filter((n): n is number => Number.isInteger(n) && (n as number) >= min && (n as number) <= max))];
 }
 
+/**
+ * Copies valid entries. Over `max`, keeps the NEWEST: date/year-keyed records by key order,
+ * the others by insertion order (entries are added over time), so old data is what gets dropped.
+ */
 function record<T>(v: unknown, keyOk: (k: string) => boolean, map: (x: unknown) => T | undefined, max: number): Record<string, T> {
   const out: Record<string, T> = {};
   if (!isObj(v)) return out;
-  let n = 0;
+  const valid: [string, T][] = [];
   for (const [k, x] of Object.entries(v)) {
-    if (n >= max) break;
     if (k === "__proto__" || k === "constructor" || k === "prototype" || !keyOk(k)) continue;
     const m = map(x);
-    if (m !== undefined) {
-      out[k] = m;
-      n++;
-    }
+    if (m !== undefined) valid.push([k, m]);
   }
+  if (valid.length > max && valid.every(([k]) => /^\d{4}/.test(k))) valid.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  for (const [k, m] of valid.slice(-max)) out[k] = m;
   return out;
 }
 

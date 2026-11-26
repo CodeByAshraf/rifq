@@ -114,7 +114,7 @@ testing first.
 
 ## Fajr alarm (`/fajr`, `/fajr-wake`)
 
-- **Fajr time:** computed on the device, offline, with `adhan` (MIT). It is checked in `scripts/test-fajr.mjs` against published timetables for Cairo, Alexandria, Matrouh and Makkah. The location is a city from the list, or the approximate position taken once and rounded to about 1 km; it never leaves the phone.
+- **Fajr time:** computed on the device, offline, with `adhan` (MIT). It is checked in `scripts/test-fajr.mjs` against published timetables for Cairo, Alexandria, Matrouh and Makkah. The place is a city picked from the list; the app requests no location permission (Play Families policy).
 - **Ringing:** the alarm is a burst of local notifications that use the alarm sound (`mobile/assets/fajr_alarm.wav`, from `npm run app:sound`).
   - Android: every 30 s for 20 min, planned 7 days ahead.
   - iOS: every 60 s for 14 min, planned 3 days ahead, because iOS keeps only 64 pending notifications.
@@ -130,8 +130,8 @@ testing first.
   - Both need native code: an Android alarm-stream foreground service with a full-screen intent, and AlarmKit on iOS 26+. This is the planned next step.
 - **Google Play:**
   - `SCHEDULE_EXACT_ALARM` comes from the notifications plugin. On Android 14+ the user grants "Alarms & reminders"; the screen has a button for it.
-  - Approximate location is processed on the device only, so in Data safety it is "not collected".
-- **App Store:** the microphone and location usage texts are set by `npm run app:configure`. The camera is not used.
+  - No location permission. App data is excluded from Android backup (`allowBackup="false"`).
+- **App Store:** the microphone usage text is set by `npm run app:configure`. The camera is not used.
 
 ## Native behaviour
 

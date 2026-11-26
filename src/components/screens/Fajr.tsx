@@ -1,11 +1,11 @@
 import { Link } from "@/components/shell/Link";
 import { useEffect, useMemo, useState } from "react";
-import { IconAlarm, IconCheck, IconPin, IconShield } from "@/components/art/Icons";
+import { IconAlarm, IconCheck, IconShield } from "@/components/art/Icons";
 import { CHALLENGE_TITLES } from "@/components/fajr/WakeChallenges";
 import { AppShell } from "@/components/shell/AppShell";
 import { Button, Card, SectionTitle } from "@/components/ui";
 import { alarmPermissionState, applyPlan, cancelTest, openExactAlarmSettings, requestAlarmPermissions, scheduleTest, type PermissionResult } from "@/lib/fajr/alarm";
-import { locate, nearestCity } from "@/lib/fajr/locate";
+import { nearestCity } from "@/lib/fajr/locate";
 import { CITIES, cityById, METHODS, type MethodId } from "@/lib/fajr/places";
 import { challengesFor, updateSettings, useFajrSettings, type ChallengeId, type FajrSettings, type Level } from "@/lib/fajr/settings";
 import { alarmTime, fajrTime, nextAlarm } from "@/lib/fajr/times";
@@ -35,7 +35,6 @@ export function Fajr() {
   const s = useFajrSettings();
   const native = isNative();
   const [perm, setPerm] = useState<PermissionResult | null>(null);
-  const [locMsg, setLocMsg] = useState("");
   const [testMsg, setTestMsg] = useState("");
   const [now, setNow] = useState(() => new Date());
 
@@ -55,18 +54,6 @@ export function Fajr() {
   const fajrToday = fajrTime(s, today);
   const next = nextAlarm(s, now);
   const placeName = s.place ? (s.place.kind === "city" ? cityById(s.place.id)?.name : `موقعك (قرب ${nearestCity(s.place).city.name})`) : null;
-
-  const useMyLocation = async () => {
-    setLocMsg("جارٍ تحديد موقعك التقريبي…");
-    const r = await locate();
-    if (typeof r === "string") {
-      setLocMsg(r === "denied" ? "لم يُسمح بالوصول إلى الموقع. اختر مدينتك من القائمة." : "تعذّر تحديد الموقع. اختر مدينتك من القائمة.");
-      return;
-    }
-    const near = nearestCity(r);
-    change({ place: { kind: "gps", ...r }, method: near.km < 400 ? near.city.method : "MuslimWorldLeague" });
-    setLocMsg("");
-  };
 
   const chooseCity = (id: string) => {
     const c = cityById(id);
@@ -138,7 +125,7 @@ export function Fajr() {
             aria-label="المدينة"
             className="h-12 w-full rounded-2xl bg-cream-100 px-4 font-bold"
           >
-            <option value="">{s.place?.kind === "gps" ? "موقعي الحالي" : "اختر مدينتك"}</option>
+            <option value="">{s.place?.kind === "gps" ? "موقع محفوظ سابقًا — اختر مدينتك" : "اختر مدينتك"}</option>
             {Object.entries(BY_COUNTRY).map(([country, list]) => (
               <optgroup key={country} label={country}>
                 {list.map((c) => (
@@ -149,10 +136,7 @@ export function Fajr() {
               </optgroup>
             ))}
           </select>
-          <Button tone="white" className="mt-3 w-full" onClick={useMyLocation}>
-            <IconPin size={18} /> استخدم موقعي التقريبي
-          </Button>
-          {locMsg && <p className="mt-2 text-sm font-bold text-ink-500">{locMsg}</p>}
+          <p className="mt-2 text-sm font-bold text-ink-500">اختر أقرب مدينة إليك. لا يطلب رِفق موقع الهاتف.</p>
 
           {s.place && (
             <div className="mt-5 rounded-2xl bg-teal-50 p-4">
@@ -303,7 +287,7 @@ export function Fajr() {
 
       <p className="mt-6 flex items-start gap-2 text-xs leading-relaxed text-ink-500">
         <IconShield size={16} className="mt-0.5 shrink-0 text-teal-600" />
-        يُحسب وقت الفجر على الهاتف دون إنترنت، والموقع لا يغادر الهاتف.{" "}
+        يُحسب وقت الفجر على الهاتف دون إنترنت، ولا يطلب التطبيق موقع الهاتف.{" "}
         <Link href="/privacy" className="font-bold underline-offset-4 hover:underline">
           سياسة الخصوصية
         </Link>

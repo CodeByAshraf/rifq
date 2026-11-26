@@ -111,6 +111,3 @@ export const IconStories = ({ size, ...r }: P) => (
 export const IconAlarm = ({ size, ...r }: P) => (
   <svg {...base(size, r)}><circle cx="12" cy="13" r="7.5" /><path d="M12 9v4l2.5 2M4 5.5 6.5 3M20 5.5 17.5 3" /></svg>
 );
-export const IconPin = ({ size, ...r }: P) => (
-  <svg {...base(size, r)}><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.3" /></svg>
-);

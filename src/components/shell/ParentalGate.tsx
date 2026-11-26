@@ -1,24 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconShield } from "@/components/art/Icons";
 import { AppShell } from "@/components/shell/AppShell";
 import { Link } from "@/components/shell/Link";
 import { Button, Card } from "@/components/ui";
 import { parseNumber } from "@/lib/fajr/challenges";
-import { gateQuestion, unlock } from "@/lib/parental-gate";
+import { answerGate, gateQuestion, lockRemaining } from "@/lib/parental-gate";
 
 /** Asks an adult-only question before showing a parents' screen. */
 export function ParentalGate({ onPass }: { onPass: () => void }) {
   const [q, setQ] = useState(() => gateQuestion());
   const [value, setValue] = useState("");
   const [wrong, setWrong] = useState(false);
+  const [wait, setWait] = useState(() => lockRemaining());
+
+  // Count down while locked after repeated wrong answers.
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = setTimeout(() => setWait(lockRemaining()), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (parseNumber(value) === q.answer) {
-      unlock();
+    if (lockRemaining() > 0) return;
+    if (answerGate(parseNumber(value) === q.answer)) {
       onPass();
       return;
     }
+    setWait(lockRemaining());
     setWrong(true);
     setValue("");
     setQ(gateQuestion()); // a new question each time: no trying every number
@@ -44,8 +53,12 @@ export function ParentalGate({ onPass }: { onPass: () => void }) {
             className="mt-4 h-14 w-full rounded-2xl bg-cream-100 text-center font-display text-2xl outline-none focus:ring-2 focus:ring-teal-300"
             dir="ltr"
           />
-          {wrong && <p className="mt-2 text-sm font-bold text-coral-500">إجابة غير صحيحة، جرّب السؤال الجديد.</p>}
-          <Button type="submit" size="lg" className="mt-4 w-full">
+          {wait > 0 ? (
+            <p className="mt-2 text-sm font-bold text-coral-500">محاولات كثيرة. انتظر {Math.ceil(wait / 1000)} ثانية.</p>
+          ) : (
+            wrong && <p className="mt-2 text-sm font-bold text-coral-500">إجابة غير صحيحة، جرّب السؤال الجديد.</p>
+          )}
+          <Button type="submit" size="lg" className="mt-4 w-full" disabled={wait > 0}>
             دخول
           </Button>
         </form>

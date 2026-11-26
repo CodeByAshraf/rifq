@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { inAdultArea } from "@/lib/area";
+import { isAdultArea } from "@/lib/area";
+import { usePathname } from "@/lib/router";
 import { getLastTap, installTapEffects, isSoundOn, playSfx, setSound, subscribeSound } from "@/lib/fx";
 
 /** Installs global tap bursts + press bounce. Render once near the root. */
@@ -56,14 +57,16 @@ function AnimatedEntry({ children }: { children: ReactNode }) {
   const [origin] = useState(() => getLastTap());
   const [overlay, setOverlay] = useState(true);
   const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  // From the route, not the <html> attribute: that one is set after this render.
+  const adult = isAdultArea(usePathname());
 
   useEffect(() => {
-    if (!reduced && !inAdultArea()) playSfx("page");
+    if (!reduced && !adult) playSfx("page");
     const t = setTimeout(() => setOverlay(false), 900);
     return () => clearTimeout(t);
-  }, [reduced]);
+  }, [reduced, adult]);
 
-  if (reduced || inAdultArea()) {
+  if (reduced || adult) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35, ease: "easeOut" }}>
         {children}

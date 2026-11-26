@@ -213,9 +213,12 @@ group("challenge generators (children and adults); number parsing; parental gate
     const cells = challenges.memoryCells(rnd, 6);
     assert.ok(cells.length === 6 && new Set(cells).size === 6 && cells.every((c) => c >= 0 && c < 16));
     const q = gate.gateQuestion(rnd);
-    const words = ["ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
-    const [a, b] = q.text.split(" × ").map((w) => words.indexOf(w) + 3);
-    assert.ok(a >= 3 && b >= 3 && q.answer === a * b && !/\d/.test(q.text), q.text);
+    const ones = ["ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"];
+    const teens = ["اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"];
+    const [ta, tb] = q.text.split(" × ");
+    const a = teens.indexOf(ta) + 12;
+    const b = ones.indexOf(tb) + 3;
+    assert.ok(a >= 12 && b >= 3 && q.answer === a * b && q.answer >= 36 && !/\d/.test(q.text), q.text);
   }
   assert.equal(challenges.parseNumber("١٢٣"), 123);
   assert.equal(challenges.parseNumber("۴۵"), 45);
@@ -223,9 +226,17 @@ group("challenge generators (children and adults); number parsing; parental gate
   assert.equal(challenges.parseNumber("1e3"), null);
   assert.equal(challenges.parseNumber(""), null);
   assert.equal(gate.isUnlocked(0), false);
-  gate.unlock(1000);
+  assert.equal(gate.answerGate(true, 1000), true);
   assert.equal(gate.isUnlocked(1000 + 4 * 60_000), true);
   assert.equal(gate.isUnlocked(1000 + 6 * 60_000), false, "the gate locks again after a few minutes");
+  // Three wrong answers lock the gate for a minute; a right answer then is refused.
+  const t0 = 10_000_000;
+  assert.equal(gate.answerGate(false, t0), false);
+  assert.equal(gate.answerGate(false, t0 + 1), false);
+  assert.equal(gate.answerGate(false, t0 + 2), false);
+  assert.ok(gate.lockRemaining(t0 + 3) > 0, "locked after three wrong answers");
+  assert.equal(gate.answerGate(true, t0 + 30_000), false, "no answer accepted while locked");
+  assert.equal(gate.answerGate(true, t0 + 61_000), true, "opens again after the lock");
   for (const r of ["/parents", "/family", "/login", "/app", "/fajr"]) assert.ok(gate.PARENT_ROUTES.has(r), r);
   assert.ok(!gate.PARENT_ROUTES.has("/fajr-wake"), "the wake-up screen must never be gated");
 });

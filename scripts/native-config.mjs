@@ -3,9 +3,9 @@
 //
 //   npm run app:configure
 //
-// Android: microphone (for «سمّع لنفسك»), notification and approximate-location permissions,
-//          notification icon, Fajr alarm sound.
-// iOS: Arabic as the development language, usage texts (microphone, location),
+// Android: microphone (for «سمّع لنفسك») and notification permissions, no backup of app data,
+//          notification icon, Fajr alarm sound. No location: Play Families forbids it in kids apps.
+// iOS: Arabic as the development language, usage text (microphone),
 //      export-compliance flag, the Privacy Manifest Apple requires, Fajr alarm sound.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -43,14 +43,20 @@ const PERMS = [
   "android.permission.RECORD_AUDIO", // «سمّع لنفسك»: recording stays on the device
   "android.permission.MODIFY_AUDIO_SETTINGS", // required by WebView audio capture
   "android.permission.POST_NOTIFICATIONS", // daily reminder + Fajr alarm (Android 13+ asks the user)
-  // Fajr alarm: "use my location" once, approximate only; the position never leaves the device.
-  // (SCHEDULE_EXACT_ALARM comes from the local-notifications plugin; CAMERA is deliberately NOT
-  // declared, so the sink photo uses the system camera app without a camera permission.)
-  "android.permission.ACCESS_COARSE_LOCATION",
+  // (SCHEDULE_EXACT_ALARM comes from the local-notifications plugin. CAMERA and location are
+  // deliberately NOT declared: the Fajr city is picked from a list.)
 ];
 patch("mobile/android/app/src/main/AndroidManifest.xml", (s) => {
   for (const perm of PERMS)
     if (!s.includes(`"${perm}"`)) s = s.replace("</manifest>", `    <uses-permission android:name="${perm}" />\n</manifest>`);
+  // Older projects asked for approximate location: remove it.
+  s = s.replace(/\s*<uses-permission android:name="android\.permission\.ACCESS_(COARSE|FINE)_LOCATION" \/>/g, "");
+  // Child data must not go to cloud backup or device transfer.
+  if (s.includes('android:allowBackup="true"'))
+    s = s.replace(
+      'android:allowBackup="true"',
+      'android:allowBackup="false"\n        android:fullBackupContent="false"\n        android:dataExtractionRules="@xml/data_extraction_rules"',
+    );
   return s;
 });
 
@@ -84,11 +90,8 @@ patch("mobile/ios/App/App/Info.plist", (s) => {
   // The camera is no longer used (the adult "photo" alarm challenge was removed): drop its text,
   // so the app does not declare a permission it never asks for.
   s = s.replace(/\n\t<key>NSCameraUsageDescription<\/key>\n\t<string>[^<]*<\/string>/, "");
-  s = plistAdd(
-    s,
-    "NSLocationWhenInUseUsageDescription",
-    "<string>يستخدم رِفق الموقع التقريبي مرّة واحدة لحساب وقت الفجر في مدينتكم، ولا يغادر الموقع الهاتف.</string>",
-  );
+  // Location is no longer used (the Fajr city is chosen from a list).
+  s = s.replace(/\n\t<key>NSLocationWhenInUseUsageDescription<\/key>\n\t<string>[^<]*<\/string>/, "");
   // HTTPS only, no custom encryption: answers the export-compliance question automatically.
   s = plistAdd(s, "ITSAppUsesNonExemptEncryption", "<false/>");
   return s;

@@ -1,30 +1,5 @@
-/** One-off approximate location for Fajr times. The position is rounded and stays on the device. */
-import { isNative } from "../native";
+/** Pure helpers for naming a stored position. The app never reads device location (kids-app policy). */
 import { CITIES, type City } from "./places";
-
-export type LocateError = "denied" | "unavailable" | "timeout";
-
-export async function locate(): Promise<{ lat: number; lng: number } | LocateError> {
-  const round = (v: number) => Math.round(v * 100) / 100;
-  if (isNative()) {
-    try {
-      const { Geolocation } = await import("@capacitor/geolocation");
-      const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 20_000, maximumAge: 3_600_000 });
-      return { lat: round(p.coords.latitude), lng: round(p.coords.longitude) };
-    } catch (e) {
-      const msg = String((e as Error)?.message ?? e).toLowerCase();
-      return msg.includes("denied") || msg.includes("permission") ? "denied" : msg.includes("timeout") ? "timeout" : "unavailable";
-    }
-  }
-  if (typeof navigator === "undefined" || !navigator.geolocation) return "unavailable";
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: round(p.coords.latitude), lng: round(p.coords.longitude) }),
-      (err) => resolve(err.code === err.PERMISSION_DENIED ? "denied" : err.code === err.TIMEOUT ? "timeout" : "unavailable"),
-      { enableHighAccuracy: false, timeout: 20_000, maximumAge: 3_600_000 },
-    );
-  });
-}
 
 /** Great-circle distance in km. */
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {

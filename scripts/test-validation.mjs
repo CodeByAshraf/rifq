@@ -8,7 +8,7 @@ import { join } from "node:path";
 const dir = mkdtempSync(join(tmpdir(), "rifq-test-"));
 const out = join(dir, "bundle.mjs");
 await build({
-  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts";', resolveDir: process.cwd(), loader: "ts" },
+  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts"; export { mergeIntoState } from "./src/lib/sync-merge.ts";', resolveDir: process.cwd(), loader: "ts" },
   bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent",
 });
 const V = await import(out);
@@ -110,6 +110,48 @@ t("sanitizeState cleans a hostile state and keeps valid data", () => {
   assert.equal(s.onboarding, undefined);
   assert.deepEqual(s.focus, { surah: 2, ayah: 255 });
   assert.equal(Object.getPrototypeOf(d.verses), Object.prototype);
+});
+t("pull merges the account into the device without losing local data", () => {
+  const v = (lastReviewed, state) => ({ state, interval: 1, ease: 2.5, reps: 1, lapses: 0, due: "2026-12-01", lastReviewed, firstLearned: "2026-11-01T00:00:00Z" });
+  const base = { stars: 0, verses: {}, lessons: {}, games: {}, badges: {}, bookmarks: [], activeDays: [], activity: [], unlockedDecor: [] };
+  const local = {
+    version: 1, activeChildId: "c1",
+    children: [{ id: "c1", remoteId: "R1", name: "سارة", weeklyGoalMinutes: 90 }, { id: "c2", name: "جديد" }],
+    data: {
+      c1: { ...base, stars: 50, verses: { "1:1": v("2026-11-25T00:00:00Z", "mastered") }, bookmarks: ["2:255"], stories: { s1: "2026-11-10" }, activeDays: ["2026-11-25"] },
+      c2: { ...base, stars: 3 },
+    },
+  };
+  const remote = {
+    children: [{ id: "rx", remoteId: "R1", name: "سارة أحمد", weeklyGoalMinutes: 60 }, { id: "ry", remoteId: "R2", name: "عمر", weeklyGoalMinutes: 60 }],
+    data: {
+      rx: { ...base, stars: 40, verses: { "1:1": v("2026-11-20T00:00:00Z", "learning"), "1:2": v("2026-11-21T00:00:00Z", "good") }, bookmarks: ["3:1"], activeDays: ["2026-11-20"] },
+      ry: { ...base, stars: 7 },
+    },
+  };
+  const m = V.mergeIntoState(local, remote);
+  assert.deepEqual(m.children.map((c) => c.id), ["c1", "c2", "ry"], "local-only child kept, new account child added");
+  assert.equal(m.activeChildId, "c1");
+  assert.equal(m.children[0].name, "سارة أحمد");
+  assert.equal(m.children[0].weeklyGoalMinutes, 90, "device-only setting kept");
+  const d = m.data.c1;
+  assert.equal(d.stars, 50);
+  assert.equal(d.verses["1:1"].state, "mastered", "newer review wins");
+  assert.equal(d.verses["1:2"].state, "good");
+  assert.deepEqual(d.bookmarks.sort(), ["2:255", "3:1"]);
+  assert.deepEqual(d.stories, { s1: "2026-11-10" }, "fields the server does not store are kept");
+  assert.deepEqual(d.activeDays, ["2026-11-20", "2026-11-25"]);
+  assert.equal(m.data.c2.stars, 3);
+});
+t("sanitizeState drops the OLDEST entries when a list is over its cap", () => {
+  const adhkar = {};
+  for (let i = 0; i < 450; i++) adhkar[new Date(Date.UTC(2025, 0, 1) + i * 864e5).toISOString().slice(0, 10)] = ["morning"];
+  const days = Object.keys(adhkar);
+  const s = V.sanitizeState({ version: 1, activeChildId: "c1", children: [{ id: "c1", name: "سارة" }], data: { c1: { adhkar, activeDays: days.concat(days, days, days, days, days, days, days, days, days) } } });
+  const kept = Object.keys(s.data.c1.adhkar);
+  assert.equal(kept.length, 400);
+  assert.ok(kept.includes(days.at(-1)) && !kept.includes(days[0]), "newest day kept, oldest dropped");
+  assert.equal(s.data.c1.activeDays.at(-1), days.at(-1));
 });
 t("sanitizeState keeps every real progress shape (challenges, adhkar, stories, certificates)", () => {
   const real = {

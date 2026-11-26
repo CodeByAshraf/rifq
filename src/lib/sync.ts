@@ -2,6 +2,7 @@ import type { BadgeId } from "@/data/badges";
 import { getSupabase } from "@/lib/supabase";
 import { actions, getState, type ChildData, type ProgressState } from "@/lib/store";
 import { sanitizeState } from "@/lib/state-guard";
+import { mergeIntoState } from "@/lib/sync-merge";
 
 // Never show raw database errors to users (they can leak schema details).
 const FAIL = { ok: false, message: "تعذّرت المزامنة الآن. حاول مرة أخرى لاحقًا." } as const;
@@ -12,7 +13,7 @@ function logError(where: string, e: unknown) {
 /**
  * Two-way sync between local progress and Supabase.
  * - push(): uploads every local learner profile and its progress (upserts).
- * - pull(): replaces local state with what is stored in the account.
+ * - pull(): merges what is stored in the account into this device (nothing local is lost).
  * All requests run as the signed-in user and are filtered by RLS.
  */
 
@@ -93,6 +94,28 @@ export async function pushProgress(): Promise<{ ok: boolean; message: string }> 
   return { ok: true, message: "تمّت مزامنة التقدّم مع حسابك." };
 }
 
+/** PostgREST returns at most ~1000 rows per request: read every page. */
+const PAGE = 1000;
+const MAX_PAGES = 50;
+type Row = Record<string, any>; // rows are checked by sanitizeState in hydrate()
+async function selectAll(
+  sb: NonNullable<ReturnType<typeof getSupabase>>,
+  table: string,
+  ids: string[],
+  order: string[],
+): Promise<{ data: Row[]; error: unknown }> {
+  const out: Row[] = [];
+  for (let p = 0; p < MAX_PAGES; p++) {
+    let q = sb.from(table).select("*").in("child_id", ids);
+    for (const col of order) q = q.order(col); // a stable order keeps pages from overlapping
+    const { data, error } = await q.range(p * PAGE, p * PAGE + PAGE - 1);
+    if (error) return { data: out, error };
+    out.push(...(data ?? []));
+    if (!data || data.length < PAGE) break;
+  }
+  return { data: out, error: null };
+}
+
 export async function pullProgress(): Promise<{ ok: boolean; message: string }> {
   const sb = getSupabase();
   if (!sb) return { ok: false, message: "لم يتم إعداد Supabase بعد." };
@@ -105,21 +128,22 @@ export async function pullProgress(): Promise<{ ok: boolean; message: string }> 
 
   const ids = kids.map((k) => k.id as string);
   const [vp, lp, ach, bm, gs, act] = await Promise.all([
-    sb.from("verse_progress").select("*").in("child_id", ids),
-    sb.from("lesson_progress").select("*").in("child_id", ids),
-    sb.from("achievements").select("*").in("child_id", ids),
-    sb.from("bookmarks").select("*").in("child_id", ids),
-    sb.from("game_scores").select("*").in("child_id", ids),
+    selectAll(sb, "verse_progress", ids, ["child_id", "surah", "ayah"]),
+    selectAll(sb, "lesson_progress", ids, ["child_id", "lesson_id"]),
+    selectAll(sb, "achievements", ids, ["child_id", "badge_id"]),
+    selectAll(sb, "bookmarks", ids, ["child_id", "surah", "ayah"]),
+    selectAll(sb, "game_scores", ids, ["child_id", "game_id"]),
     sb.from("activity_log").select("*").in("child_id", ids).order("created_at", { ascending: false }).limit(200),
   ]);
   const err = [vp, lp, ach, bm, gs, act].find((r) => r.error);
   if (err?.error) return logError("select", err.error), FAIL;
+  const local = getState();
 
-  const next: ProgressState = { version: 1, activeChildId: "", children: [], data: {} };
+  const next: Pick<ProgressState, "children" | "data"> = { children: [], data: {} };
   for (const k of kids) {
     if (typeof k.id !== "string" || !/^[0-9a-f-]{36}$/i.test(k.id)) continue;
     const id = `r${k.id.replace(/-/g, "").slice(0, 12)}`;
-    next.children.push({ id, remoteId: k.id, name: k.display_name, avatar: k.avatar, weeklyGoalMinutes: 60, weeklyDaysGoal: k.weekly_days_goal, dailyVerses: k.daily_verses });
+    next.children.push({ id, remoteId: k.id, name: k.display_name, avatar: k.avatar, weeklyGoalMinutes: local.children.find((c) => c.remoteId === k.id)?.weeklyGoalMinutes ?? 60, weeklyDaysGoal: k.weekly_days_goal, dailyVerses: k.daily_verses });
     const d: ChildData = { stars: k.stars, verses: {}, lessons: {}, games: {}, badges: {}, bookmarks: [], activeDays: k.active_days ?? [], activity: [], unlockedDecor: [] };
     vp.data!.filter((r) => r.child_id === k.id).forEach((r) => {
       d.verses[`${r.surah}:${r.ayah}`] = { state: r.state, interval: r.interval_days, ease: r.ease, reps: r.reps, lapses: r.lapses, due: r.due, lastReviewed: r.last_reviewed, firstLearned: r.first_learned };
@@ -132,7 +156,6 @@ export async function pullProgress(): Promise<{ ok: boolean; message: string }> 
     next.data[id] = d;
   }
   if (!next.children.length) return FAIL;
-  next.activeChildId = next.children[0].id;
-  actions.hydrate(next);
+  actions.hydrate(mergeIntoState(local, next));
   return { ok: true, message: "تمّ تحميل التقدّم من حسابك." };
 }

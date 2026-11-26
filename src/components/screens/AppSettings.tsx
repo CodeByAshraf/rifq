@@ -8,6 +8,7 @@ import { isNative, setNativeDailyReminder, type ReminderResult } from "@/lib/nat
 import { disableAlarm } from "@/lib/fajr/alarm";
 import { clearRecordings } from "@/lib/recordings";
 import { actions, useProgress } from "@/lib/store";
+import { getSupabase } from "@/lib/supabase";
 
 const DEFAULT_REMINDER = { time: "17:00", enabled: false };
 
@@ -17,14 +18,18 @@ export function AppSettings() {
   const [time, setTime] = useState(reminder.time);
   const native = isNative();
   const [wipeStep, setWipeStep] = useState<0 | 1 | 2>(0);
-  /** Erases everything RIFQ keeps on this device: progress, children, recordings, reminders, settings. */
+  /** Erases everything RIFQ keeps on this device: account session, progress, children, recordings, reminders, settings. */
   const wipeDevice = async () => {
+    // Sign out first (local scope: works offline) so the parent's account session does not survive the wipe.
+    await getSupabase()?.auth.signOut({ scope: "local" }).catch(() => {});
     await clearRecordings().catch(() => {});
     if (native) await setNativeDailyReminder(time, false).catch(() => {});
     await disableAlarm().catch(() => {});
     actions.resetAll();
     try {
-      for (const k of Object.keys(localStorage)) if (k.startsWith("rifq.")) localStorage.removeItem(k);
+      // rifq.* = app data; sb-* = Supabase auth token, in case signOut could not run.
+      for (const k of Object.keys(localStorage)) if (k.startsWith("rifq.") || k.startsWith("sb-")) localStorage.removeItem(k);
+      sessionStorage.clear();
     } catch {
       /* storage unavailable */
     }
