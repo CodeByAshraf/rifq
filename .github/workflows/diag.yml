@@ -1,0 +1,27 @@
+# Temporary: checks how the recitation audio hosts answer (redirects, content type, CORS).
+name: diag
+on:
+  push:
+    branches: [diag]
+permissions:
+  contents: write
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in \
+            "https://everyayah.com/data/Alafasy_128kbps/001001.mp3" \
+            "https://everyayah.com/data/Husary_128kbps/002255.mp3" \
+            "https://verses.quran.com/Alafasy/mp3/001001.mp3" \
+            "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3" ; do
+            echo "=== $u" >> out.txt
+            curl -sIL -m 30 -H "Origin: https://localhost" -H "Range: bytes=0-1" "$u" | grep -iE "^(HTTP|location|content-type|access-control-allow-origin|accept-ranges|content-range|server)" >> out.txt || echo "curl failed" >> out.txt
+          done
+          cat out.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: diag-${{ github.run_number }}
+          name: diag
+          prerelease: true
+          body_path: out.txt
