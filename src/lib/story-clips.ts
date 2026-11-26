@@ -7,6 +7,7 @@
  * - Quran verses are played from verified EveryAyah recitations by a human reciter.
  */
 import type { Story } from "@/data/stories";
+import { VOICED } from "@/data/stories-voiced";
 
 export type Clip =
   | { kind: "voice"; file: string; text: string; page?: number }
@@ -28,22 +29,25 @@ const speakable = (t: string) =>
     .replace(/[«»]/g, "")
     .trim();
 
+/** The vocalized text if there is one (always, checked by tests), else the plain spoken text. */
+const voiced = (file: string, plain: string) => ({ file, text: VOICED[file] ?? speakable(plain), plain: speakable(plain) });
+
 const pageFile = (id: string, i: number) => `${id}.${i}.mp3`;
 const lessonFile = (id: string) => `${id}.lesson.mp3`;
 
 /** Every recording a story needs, with the exact text the narrator reads. @public (scripts/narrate-stories.mjs) */
 export function narrationTexts(story: Story): { file: string; text: string }[] {
   return [
-    ...story.pages.map((p, i) => ({ file: pageFile(story.id, i), text: speakable(i === 0 ? `${story.title}.\n\n${p}` : p) })),
-    { file: lessonFile(story.id), text: speakable(`ماذا تعلّمنا من هذه القصّة؟ ${story.lesson}`) },
+    ...story.pages.map((p, i) => voiced(pageFile(story.id, i), i === 0 ? `${story.title}.\n\n${p}` : p)),
+    voiced(lessonFile(story.id), `ماذا تعلّمنا من هذه القصّة؟ ${story.lesson}`),
   ];
 }
 
 /** The fixed lines as recordings. @public (scripts/narrate-stories.mjs) */
-export const lineTexts = () => (Object.entries(LINES) as [LineId, string][]).map(([k, text]) => ({ file: `${k}.mp3`, text }));
+export const lineTexts = () => (Object.entries(LINES) as [LineId, string][]).map(([k, text]) => voiced(`${k}.mp3`, text));
 
 /** A fixed line as a clip. */
-export const lineClip = (id: LineId): Extract<Clip, { kind: "voice" }> => ({ kind: "voice", file: `${id}.mp3`, text: LINES[id] });
+export const lineClip = (id: LineId): Extract<Clip, { kind: "voice" }> => ({ kind: "voice", file: `${id}.mp3`, text: VOICED[`${id}.mp3`] ?? LINES[id] });
 
 /** What to play for one story, starting at a page: pages, then the verses, then the lesson. */
 export function storyPlan(story: Story, fromPage = 0): Clip[] {

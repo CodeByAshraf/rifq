@@ -120,6 +120,13 @@ t("story narration: every clip the app plays is one the script records; verses a
     assert.equal(ayahs.length, s.ayah ? s.ayah.to - s.ayah.from + 1 : 0, s.id);
     assert.equal(V.storyPlan(s, 2)[0].page, 2, "listening can start from the open page");
   }
+  // Vocalized narration: every clip has one, and without its marks it is exactly the story text.
+  const bare = (t) => t.replace(/[\u064B-\u0652\u0670]/g, "").replace(/\s+/g, " ").trim();
+  for (const c of [...V.lineTexts(), ...V.STORIES.flatMap((s) => V.narrationTexts(s))]) {
+    assert.ok(/[\u064E\u064F\u0650]/.test(c.text), `${c.file}: not vocalized`);
+    assert.equal(bare(c.text), bare(c.plain), `${c.file}: vocalized text differs from the story`);
+    if (/الله/.test(c.plain)) assert.ok(/لل[\u064E\u064F\u0650]?\u0651[\u064E\u064F\u0650]?ه/.test(c.text), `${c.file}: the name of Allah needs its shadda`);
+  }
   for (const c of V.STORIES.flatMap((s) => V.narrationTexts(s))) assert.ok(!/[\u06D6-\u06ED\u08F0-\u08F2\u0671]/.test(c.text), c.file);
 });
 t("pull merges the account into the device without losing local data", () => {
