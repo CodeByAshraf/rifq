@@ -17,7 +17,7 @@ public store pages (privacy, account deletion) are static HTML with no JavaScrip
 | Input | `src/lib/validation.ts` and `src/lib/state-guard.ts` clean every name, email, time and id, and the whole saved state, before use or upload. The Fajr settings are validated the same way (`src/lib/fajr/*`). |
 | Database | `supabase/migrations/0002_security.sql`: <ul><li>RLS enabled **and forced** on every table, with owner-only policies.</li><li>`parent_id` and `child_id` cannot be changed.</li><li>CHECK constraints on every value; verse references checked against real surah lengths.</li><li>Limits: at most 10 learners per account, plus an activity flood limit.</li><li>Internal functions are not callable through the API, and nothing is granted to `anon`.</li></ul> `0003_account_deletion.sql`: `delete_my_account()` deletes only the caller. |
 | SQL injection | All queries go through supabase-js → PostgREST, which sends values as bound parameters. The app contains no hand-built SQL. |
-| On-device privacy | Recordings and the Fajr city never leave the phone. The app requests no location permission. |
+| On-device privacy | Recordings, family voice messages («تحفيز طفلك», IndexedDB `rifq-messages`) and the Fajr city never leave the phone; the device wipe clears them. The app requests no location permission. |
 | Kids rules | Parents-only screens (account, family, settings, alarm setup, sharing) open only after a parental gate. |
 | Dependencies | `npm audit` = 0 vulnerabilities. |
 

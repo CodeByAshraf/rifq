@@ -5,6 +5,8 @@ import { Adhkar } from "@/components/screens/Adhkar";
 import { AdultHome } from "@/components/screens/AdultHome";
 import { MushafReader } from "@/components/screens/MushafReader";
 import { Bedtime } from "@/components/screens/Bedtime";
+import { Irtaqi } from "@/components/screens/Irtaqi";
+import { Motivate } from "@/components/screens/Motivate";
 import { AppSettings } from "@/components/screens/AppSettings";
 import { Certificates } from "@/components/screens/Certificates";
 import { Challenges } from "@/components/screens/Challenges";
@@ -45,6 +47,8 @@ export const ROUTES: Record<string, () => ReactElement> = {
   "/play": Games,
   "/stories": Stories,
   "/bedtime": Bedtime,
+  "/irtaqi": Irtaqi,
+  "/motivate": Motivate,
   "/revision": Revision,
   "/parents": Parents,
   "/adults": AdultHome,

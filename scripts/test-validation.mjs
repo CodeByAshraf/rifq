@@ -8,7 +8,7 @@ import { join } from "node:path";
 const dir = mkdtempSync(join(tmpdir(), "rifq-test-"));
 const out = join(dir, "bundle.mjs");
 await build({
-  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts"; export { mergeIntoState } from "./src/lib/sync-merge.ts"; export { spellAllah } from "./src/lib/allah-spelling.ts"; export { STORIES } from "./src/data/stories.ts"; export { storyPlan, narrationTexts, lineTexts } from "./src/lib/story-clips.ts";', resolveDir: process.cwd(), loader: "ts" },
+  stdin: { contents: 'export * from "./src/lib/validation.ts"; export { sanitizeState } from "./src/lib/state-guard.ts"; export * from "./src/lib/dates.ts"; export { fridayKey } from "./src/lib/hijri.ts"; export { mergeIntoState } from "./src/lib/sync-merge.ts"; export { ladder, rewardProgress, trackMotivation, nextCelebration, STEPS } from "./src/lib/motivation.ts"; export { spellAllah } from "./src/lib/allah-spelling.ts"; export { STORIES } from "./src/data/stories.ts"; export { storyPlan, narrationTexts, lineTexts } from "./src/lib/story-clips.ts";', resolveDir: process.cwd(), loader: "ts" },
   bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent",
 });
 const V = await import(out);
@@ -133,6 +133,61 @@ t("story narration: every clip the app plays is one the script records; verses a
   assert.equal(V.spellAllah("الَّذِينَ اللَّيْلَةِ", "alif"), "الَّذِينَ اللَّيْلَةِ");
   for (const c of V.STORIES.flatMap((s) => V.narrationTexts(s))) assert.ok(!/[\u06D6-\u06ED\u08F0-\u08F2\u0671]/.test(c.text), c.file);
 });
+t("motivation: ladder, reward, daily goal and what to celebrate", () => {
+  // Ladder
+  assert.equal(V.ladder(0).level, -1);
+  assert.equal(V.ladder(1).title, "أول درجة");
+  const l = V.ladder(30);
+  assert.equal(l.title, "حامل النور");
+  assert.equal(l.next.at, 50);
+  assert.equal(l.toNext, 20);
+  assert.ok(l.pct > 0 && l.pct < 1);
+  assert.equal(V.ladder(6236).next, null);
+  assert.ok(V.STEPS.every((st, i) => i === 0 || st.at > V.STEPS[i - 1].at), "steps rise");
+
+  const now = new Date().toISOString();
+  const day = now.slice(0, 10);
+  const verse = (state) => ({ state, interval: 1, ease: 2.5, reps: 1, lapses: 0, due: "2026-12-01", lastReviewed: now, firstLearned: now });
+  const base = { stars: 0, verses: {}, lessons: {}, games: {}, badges: {}, bookmarks: [], activeDays: [], activity: [], unlockedDecor: [] };
+  const vs = {};
+  for (let a = 1; a <= 6; a++) vs[`114:${a}`] = verse("good");
+
+  // Reward by new verses: counts only from the base.
+  const r1 = { text: "نزهة", kind: "verses", n: 5, base: 3, set: now };
+  assert.deepEqual(V.rewardProgress({ ...base, verses: vs }, r1).cur, 3);
+  assert.equal(V.rewardProgress({ ...base, verses: vs }, r1).done, false);
+  // Reward by surah: An-Nas has 6 verses.
+  assert.equal(V.rewardProgress({ ...base, verses: vs }, { ...r1, kind: "surah", n: 114 }).done, true);
+
+  // Daily goal: all three missions done today → goal day; a reached reward gets its time.
+  const local = new Date();
+  const today = `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, "0")}-${String(local.getDate()).padStart(2, "0")}`;
+  const act = ["memorize", "revise", "game"].map((kind) => ({ kind, label: "x", stars: 1, at: now }));
+  const d = V.trackMotivation({ ...base, verses: vs, activity: act, reward: { ...r1, kind: "surah", n: 114 } }, today, now);
+  assert.deepEqual(d.goalDays, [today]);
+  assert.equal(d.reward.reached, now);
+  assert.deepEqual(V.trackMotivation(d, today, now).goalDays, [today], "a day counts once");
+  // Celebrations: reward first, then the ladder step, then the goal; each once.
+  assert.equal(V.nextCelebration(d, today).kind, "reward");
+  const d2 = { ...d, seen: { reward: now } };
+  assert.equal(V.nextCelebration(d2, today).kind, "ladder");
+  const d3 = { ...d2, seen: { ...d2.seen, ladder: V.ladder(6).level } };
+  assert.equal(V.nextCelebration(d3, today).kind, "goal");
+  assert.equal(V.nextCelebration({ ...d3, seen: { ...d3.seen, goal: today } }, today), null);
+  // Not all missions → no goal day.
+  assert.equal(V.trackMotivation({ ...base, activity: act.slice(0, 2) }, today, now).goalDays, undefined);
+
+  // The state guard keeps a valid reward and drops a broken one.
+  const st = (reward) => V.sanitizeState({ version: 1, activeChildId: "c1", children: [{ id: "c1", name: "سارة" }], data: { c1: { reward, goalDays: [today, "bad"], seen: { goal: today, ladder: 3 } } } }).data.c1;
+  const ok = st({ text: "<b>نزهة</b>", kind: "days", n: 9999, base: 2, set: now });
+  assert.equal(ok.reward.kind, "days");
+  assert.equal(ok.reward.n, 365, "clamped");
+  assert.ok(!/[<>]/.test(ok.reward.text));
+  assert.deepEqual(ok.goalDays, [today]);
+  assert.equal(ok.seen.ladder, 3);
+  assert.equal(st({ text: "x", kind: "money", n: 1, set: now }).reward, undefined);
+});
+
 t("pull merges the account into the device without losing local data", () => {
   const v = (lastReviewed, state) => ({ state, interval: 1, ease: 2.5, reps: 1, lapses: 0, due: "2026-12-01", lastReviewed, firstLearned: "2026-11-01T00:00:00Z" });
   const base = { stars: 0, verses: {}, lessons: {}, games: {}, badges: {}, bookmarks: [], activeDays: [], activity: [], unlockedDecor: [] };

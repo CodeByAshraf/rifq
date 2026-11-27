@@ -88,6 +88,32 @@ function childData(v: unknown) {
       dhul: record(ch.dhul, (k) => /^\d{4}$/.test(k), (x) => (Array.isArray(x) ? strArray(x, isIsoDay, 20) : undefined), 100),
     },
     recordings: clampInt(d.recordings, 0, 1_000_000),
+    goalDays: strArray(d.goalDays, isIsoDay, 400),
+    ...(reward(d.reward) && { reward: reward(d.reward) }),
+    seen: isObj(d.seen)
+      ? {
+          ...(isIsoDay(d.seen.goal) && { goal: d.seen.goal as string }),
+          ...(d.seen.ladder !== undefined && { ladder: clampInt(d.seen.ladder, -1, 100, -1) }),
+          ...(isIsoTime(d.seen.reward) && { reward: d.seen.reward as string }),
+        }
+      : {},
+  };
+}
+
+const REWARD_KINDS = new Set(["verses", "surah", "days"]);
+function reward(v: unknown) {
+  if (!isObj(v) || !REWARD_KINDS.has(v.kind as string) || !isIsoTime(v.set)) return undefined;
+  const text = sanitizeName(v.text, 60);
+  if (!text) return undefined;
+  const max = v.kind === "surah" ? 114 : v.kind === "days" ? 365 : 6236;
+  return {
+    text,
+    kind: v.kind as "verses" | "surah" | "days",
+    n: clampInt(v.n, 1, max, 1),
+    base: clampInt(v.base, 0, 100_000),
+    set: v.set as string,
+    ...(isIsoTime(v.reached) && { reached: v.reached as string }),
+    ...(isIsoTime(v.given) && { given: v.given as string }),
   };
 }
 

@@ -237,7 +237,7 @@ group("challenge generators (children and adults); number parsing; parental gate
   assert.ok(gate.lockRemaining(t0 + 3) > 0, "locked after three wrong answers");
   assert.equal(gate.answerGate(true, t0 + 30_000), false, "no answer accepted while locked");
   assert.equal(gate.answerGate(true, t0 + 61_000), true, "opens again after the lock");
-  for (const r of ["/parents", "/family", "/login", "/app", "/fajr"]) assert.ok(gate.PARENT_ROUTES.has(r), r);
+  for (const r of ["/motivate", "/parents", "/family", "/login", "/app", "/fajr"]) assert.ok(gate.PARENT_ROUTES.has(r), r);
   assert.ok(!gate.PARENT_ROUTES.has("/fajr-wake"), "the wake-up screen must never be gated");
 });
 

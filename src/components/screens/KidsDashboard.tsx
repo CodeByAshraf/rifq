@@ -15,6 +15,7 @@ import { StoryScene } from "@/components/art/StoryScene";
 import { dailyMissions, dueVerses, learnedTotal, relativeDay, stationStatus } from "@/lib/learning";
 import { surahMeta, toArabicDigits } from "@/lib/quran";
 import { actions, streak, useChild, type Avatar } from "@/lib/store";
+import { ladder, rewardProgress } from "@/lib/motivation";
 
 const KIND_ICON = { memorize: IconSprout, revise: IconRefresh, lesson: IconLantern, game: IconPuzzle, read: IconBook };
 
@@ -45,6 +46,9 @@ export function KidsDashboard() {
   const learned = learnedTotal(data.verses);
   const s = streak(data.activeDays);
   const earnedBadges = BADGES.filter((b) => data.badges[b.id]);
+  const L = ladder(learned);
+  const reward = data.reward;
+  const rp = reward ? rewardProgress(data, reward) : null;
 
   return (
     <AppShell>
@@ -121,6 +125,29 @@ export function KidsDashboard() {
             <div className="text-sm opacity-85">{t.sub}</div>
           </Link>
         ))}
+      </div>
+
+      {/* ---------- Motivation: the ladder and the promised reward ---------- */}
+      <div className={`mt-6 grid gap-3 ${reward ? "sm:grid-cols-2" : ""}`}>
+        <Link href="/irtaqi" className="rounded-[1.6rem] bg-gradient-to-br from-teal-500 to-teal-700 p-5 text-white shadow-soft transition hover:-translate-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-display text-sm font-bold text-teal-100">اقرأ وارتقِ</span>
+            <span className="rounded-xl bg-white/20 px-2 py-0.5 text-xs font-bold">الدرجة {toArabicDigits(L.level + 1)}</span>
+          </div>
+          <div className="mt-1 font-display text-2xl font-extrabold">{L.title}</div>
+          <ProgressBar value={L.pct} tone="sun" className="mt-3" label="التقدّم إلى الدرجة التالية" />
+          <div className="mt-1 text-sm text-teal-50">{L.next ? `باقي ${toArabicDigits(L.toNext)} آية لـ«${L.next.title}»` : "بلغتَ القمّة!"}</div>
+        </Link>
+        {reward && rp && (
+          <div className="rounded-[1.6rem] bg-gradient-to-br from-sun-200 to-sun-400 p-5 text-ink-900 shadow-soft">
+            <div className="font-display text-sm font-bold">🎁 هدية من بابا وماما</div>
+            <div className="mt-1 font-display text-2xl font-extrabold">{reward.text}</div>
+            <ProgressBar value={rp.target ? rp.cur / rp.target : 0} tone="mint" className="mt-3" label="التقدّم نحو الهدية" />
+            <div className="mt-1 text-sm font-bold">
+              {reward.reached ? "استحققتها! أخبر بابا وماما 🎉" : `${rp.goal}: ${toArabicDigits(rp.cur)} من ${toArabicDigits(rp.target)}`}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ---------- Stats ---------- */}

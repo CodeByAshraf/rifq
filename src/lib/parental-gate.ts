@@ -8,7 +8,7 @@ const UNLOCK_MS = 5 * 60_000;
 let unlockedAt = -Infinity;
 
 /** Routes behind the gate. */
-export const PARENT_ROUTES = new Set(["/parents", "/family", "/login", "/app", "/fajr", "/adults-fajr"]);
+export const PARENT_ROUTES = new Set(["/parents", "/family", "/login", "/app", "/fajr", "/adults-fajr", "/motivate"]);
 
 export const isUnlocked = (now = Date.now()) => now - unlockedAt < UNLOCK_MS;
 const unlock = (now = Date.now()) => {

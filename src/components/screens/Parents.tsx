@@ -6,6 +6,7 @@ import { Button, Card } from "@/components/ui";
 import { shareApp } from "@/lib/native";
 
 const ITEMS = [
+  { href: "/motivate", title: "تحفيز طفلك", text: "هديةٌ تعدونه بها، ورسالةٌ صوتية منكم تفرحه عند الوصول", icon: IconStar, tone: "bg-sun-100 text-sun-600" },
   { href: "/family", title: "متابعة الأبناء", text: "ملفّ لكلّ طفل، وهدفه الأسبوعي، وتقدّمه وانتظامه", icon: IconFamily, tone: "bg-teal-100 text-teal-700" },
   { href: "/login", title: "حساب العائلة", text: "مزامنة التقدّم بين الأجهزة، وحذف الحساب (اختياري)", icon: IconShield, tone: "bg-sky-100 text-sky-500" },
   { href: "/fajr", title: "منبّه الفجر", text: "اضبط المدينة والموعد والتحدّيات لطفلك", icon: IconAlarm, tone: "bg-lilac-100 text-lilac-600" },

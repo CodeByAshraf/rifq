@@ -7,6 +7,7 @@ import { Button, Card, SectionTitle } from "@/components/ui";
 import { isNative, setNativeDailyReminder, type ReminderResult } from "@/lib/native";
 import { disableAlarm } from "@/lib/fajr/alarm";
 import { clearRecordings } from "@/lib/recordings";
+import { clearMessages } from "@/lib/messages";
 import { actions, useProgress } from "@/lib/store";
 import { getSupabase } from "@/lib/supabase";
 
@@ -23,6 +24,7 @@ export function AppSettings() {
     // Sign out first (local scope: works offline) so the parent's account session does not survive the wipe.
     await getSupabase()?.auth.signOut({ scope: "local" }).catch(() => {});
     await clearRecordings().catch(() => {});
+    await clearMessages().catch(() => {});
     if (native) await setNativeDailyReminder(time, false).catch(() => {});
     await disableAlarm().catch(() => {});
     actions.resetAll();

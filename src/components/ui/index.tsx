@@ -133,7 +133,7 @@ export function Modal({ open, onClose, children, title, wide = false }: { open: 
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button onClick={onClose} className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-cream-200 text-ink-700" aria-label="إغلاق">
+            <button onClick={onClose} className="absolute left-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-cream-200 text-ink-700" aria-label="إغلاق">
               <IconX size={18} />
             </button>
             {children}

@@ -5,6 +5,7 @@ import { nextReview, type Rating } from "@/lib/srs";
 import { sanitizeState } from "@/lib/state-guard";
 import { clampInt, isValidName, isValidTime, sanitizeName } from "@/lib/validation";
 import { localDay } from "@/lib/dates";
+import { rewardBase, trackMotivation, type Reward, type RewardKind } from "@/lib/motivation";
 
 /** Memorization states tracked per verse. */
 export type VerseState = "not_started" | "learning" | "needs_revision" | "good" | "mastered";
@@ -95,6 +96,12 @@ export interface ChildData {
   };
   /** Number of recitations the learner recorded. */
   recordings?: number;
+  /** Local ISO days on which all of the day's missions were done. */
+  goalDays?: string[];
+  /** «هدية من بابا وماما»: the reward a parent promised. */
+  reward?: Reward;
+  /** Celebrations already shown: goal = ISO day, ladder = step index, reward = its `reached` time. */
+  seen?: { goal?: string; ladder?: number; reward?: string };
 }
 
 const KEY = "rifq.progress.v1";
@@ -190,7 +197,7 @@ function updateChild(fn: (d: ChildData) => ChildData) {
     const d = s.data[id] ?? emptyChild();
     const t = today();
     const withDay = d.activeDays.includes(t) ? d : { ...d, activeDays: [...d.activeDays, t].slice(-120) };
-    const next = awardCertificates(awardBadges(fn(withDay)));
+    const next = trackMotivation(awardCertificates(awardBadges(fn(withDay))), t, new Date().toISOString());
     return { ...s, data: { ...s.data, [id]: next } };
   });
 }
@@ -333,6 +340,37 @@ export const actions = {
       recordings: (d.recordings ?? 0) + 1,
       activity: [{ kind: "read" as const, label, stars: 2, at: new Date().toISOString() }, ...d.activity].slice(0, 40),
     }));
+  },
+  /** Parent sets (or replaces) a child's reward. `n`: verses, surah number or days. */
+  setReward(childId: string, raw: { text: string; kind: RewardKind; n: number }) {
+    const text = sanitizeName(raw.text, 60);
+    if (!isValidName(text, 60)) return;
+    const kind: RewardKind = raw.kind === "surah" || raw.kind === "days" ? raw.kind : "verses";
+    const n = kind === "surah" ? clampInt(raw.n, 1, 114, 78) : kind === "days" ? clampInt(raw.n, 1, 365, 7) : clampInt(raw.n, 1, 6236, 20);
+    set((s) => {
+      const d = s.data[childId];
+      if (!d) return s;
+      const reward: Reward = { text, kind, n, base: rewardBase(d, kind), set: new Date().toISOString() };
+      return { ...s, data: { ...s.data, [childId]: trackMotivation({ ...d, reward }, today(), new Date().toISOString()) } };
+    });
+  },
+  /** The parent gave the reward (or cancelled it): it is removed. */
+  clearReward(childId: string) {
+    set((s) => {
+      const d = s.data[childId];
+      if (!d?.reward) return s;
+      const { reward: _r, ...rest } = d;
+      return { ...s, data: { ...s.data, [childId]: rest } };
+    });
+  },
+  /** A celebration was shown to the active child. */
+  markSeen(patch: { goal?: string; ladder?: number; reward?: string }) {
+    set((s) => {
+      const id = s.activeChildId;
+      const d = s.data[id];
+      if (!d) return s;
+      return { ...s, data: { ...s.data, [id]: { ...d, seen: { ...(d.seen ?? {}), ...patch } } } };
+    });
   },
   setReminder(r: { time: string; enabled: boolean }) {
     if (!isValidTime(r.time)) return;

@@ -9,6 +9,7 @@ import {
 import { StarCount } from "@/components/ui";
 import { SoundToggle } from "@/components/shell/Fx";
 import { CertificateAnnouncer } from "@/components/certificates/CertificateAnnouncer";
+import { MotivationAnnouncer } from "@/components/shell/MotivationAnnouncer";
 import { ReminderBanner } from "@/components/shell/ReminderBanner";
 import { streak, useChild } from "@/lib/store";
 import { isAdultArea } from "@/lib/area";
@@ -127,6 +128,7 @@ function KidsShell({ children, wide }: { children: ReactNode; wide: boolean }) {
       <ReminderBanner />
       <main className={`mx-auto px-4 pb-32 pt-6 lg:pb-16 ${wide ? "max-w-7xl" : "max-w-6xl"}`}>{children}</main>
       <CertificateAnnouncer />
+      <MotivationAnnouncer />
 
       {/* Mobile bottom navigation */}
       <nav className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 lg:hidden" aria-label="التنقل السفلي">
