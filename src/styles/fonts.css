@@ -7,7 +7,7 @@
 @import "@fontsource/readex-pro/700.css";
 @import "@fontsource/amiri-quran/400.css";
 
-/* Mushaf of the adults' corner: the King Fahd Complex Uthmanic Hafs font, shipped unmodified
+/* All Quran text (the Mushaf and every verse in the app): the King Fahd Complex Uthmanic Hafs font, shipped unmodified
    (its licence allows use and distribution, not modification). Loaded only when a page is shown. */
 @font-face {
   font-family: "KFGQPC Hafs";

@@ -6,7 +6,7 @@
 @theme {
   --font-display: "Baloo Bhaijaan 2", "Readex Pro", system-ui, sans-serif;
   --font-body: "Readex Pro", "Baloo Bhaijaan 2", system-ui, sans-serif;
-  --font-quran: "Amiri Quran", "KFGQPC Uthmanic Script HAFS", "Scheherazade New", serif;
+  --font-quran: "KFGQPC Hafs", "Amiri Quran", "Scheherazade New", serif;
 
   --color-ink-900: #1d3a4a;
   --color-ink-700: #35566a;
